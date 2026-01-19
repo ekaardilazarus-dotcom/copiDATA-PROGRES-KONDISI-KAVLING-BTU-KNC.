@@ -1,6 +1,6 @@
 // versi 0.442
 const USER_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx08smViAL2fT_P0ZCljaM8NGyDPZvhZiWt2EeIy1MYsjoWnSMEyXwoS6jydO-_J8OH/exec';
-const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpC_OqLvzKsNTB0ngV6Fte20kx1LWl8NSIpDNVjpP9FV0hdZy2e8gy_q8leycLLgmm_w/exec';
+const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9hN6X05NjvOFsOk0jnXBO8x16U7zehISgDWmNpsxCdWMf_BYKt1VcPuxh1biw0RLT1g/exec';
 
 let currentRole = null;
 let selectedKavling = null;
@@ -4436,9 +4436,20 @@ function setupViewMutationButton() {
     btnViewMutation.addEventListener('click', function(e) {
       e.preventDefault();
       const container = document.getElementById('mutasiHistoryContainer');
+      if (!container) return;
       
       if (container.style.display === 'none' || container.style.display === '') {
-        loadMutationHistory();
+        if (typeof loadMutationHistory === 'function') {
+          loadMutationHistory();
+        } else if (typeof loadAdminUtilitasData === 'function') {
+          const kavling = selectedKavling || (document.querySelector('#kavlingInfoUser4 .val-name')?.textContent !== '-' ? document.querySelector('#kavlingInfoUser4 .val-name')?.textContent : null);
+          if (kavling) {
+             loadAdminUtilitasData(kavling);
+             container.style.display = 'block';
+          } else {
+             showToast('warning', 'Pilih kavling terlebih dahulu!');
+          }
+        }
       } else {
         container.style.display = 'none';
       }
