@@ -492,15 +492,16 @@
     <i class="fas fa-calendar-alt"></i> Tanggal Penyerahan Kunci dari Pelaksana ke Penanggung Jawab :
   </label>
   
-<div style="display: flex; gap: 10px; align-items: center;">
-  <!-- Input tanggal -->
-  <input 
-    type="text" 
-    class="key-delivery-date sub-task-text" 
-    placeholder="dd/mm/yyyy" 
-    style="width: 100%; padding: 14px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;" 
-    maxlength="10"
-  >
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <!-- Input tanggal -->
+    <input 
+      type="text" 
+      class="key-delivery-date sub-ta" 
+      placeholder="dd/mm/yyyy" 
+      style="width: 100%; padding: 14px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;" 
+      maxlength="10"
+    >
+  </div>
   
   <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
     <!-- Tombol Hari Ini -->
@@ -977,6 +978,7 @@
             <button id="btnViewMutationHistory" type="button" class="btn-primary" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #38bdf8, #1d4ed8); border-radius: 12px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.3s ease;">
               <i class="fas fa-history"></i> Lihat Data Mutasi
             </button>
+            <div id="mutasiHistoryContainer" style="display: none; margin-top: 15px; padding: 15px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; max-height: 400px; overflow-y: auto;"></div>
           </div>
 
           <!-- Admin Utilitas Tabs -->
@@ -993,7 +995,6 @@
             <button class="admin-tab-btn" data-tab="utility-install">
               <i class="fas fa-bolt"></i> Pemasangan Listrik & Air
             </button>
-          </div>
           </div>
 
           <div class="tab-content">
@@ -1055,6 +1056,11 @@
             <div id="tab-ho-user" class="tab-content-item">
               <div class="progress-section detailed" style="border-left: 6px solid #8b5cf6;">
                 <h3 style="color: #8b5cf6; margin-bottom: 15px;"><i class="fas fa-user-check"></i> Mutasi HO Ke User</h3>
+                <div id="ho-edit-container" style="display:none; margin-bottom: 15px;">
+                    <button id="btn-edit-ho" type="button" class="btn-primary" style="background: #8b5cf6; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;">
+                        <i class="fas fa-edit"></i> EDIT MUTASI HO
+                    </button>
+                </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                   <label style="display: block; margin-bottom: 8px; color: #94a3b8;">Diberikan Oleh:</label>
                   <input type="text" class="input-mutasi-ho-dari" placeholder="Nama Pemberi" style="width: 100%; padding: 12px; border-radius: 8px; background: #0f172a; border: 1px solid #334155; color: white;">
