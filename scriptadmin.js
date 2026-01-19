@@ -6,7 +6,7 @@
     
     // ========== KONFIGURASI ==========
     // ⚠️ Gunakan URL yang sama dengan script.js
-    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbzpC_OqLvzKsNTB0ngV6Fte20kx1LWl8NSIpDNVjpP9FV0hdZy2e8gy_q8leycLLgmm_w/exec';
+    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbw9hN6X05NjvOFsOk0jnXBO8x16U7zehISgDWmNpsxCdWMf_BYKt1VcPuxh1biw0RLT1g/execc';
     
     // ========== VARIABEL ==========
     let adminData = {
@@ -17,7 +17,16 @@
     
     // ========== UTILITY FUNCTIONS ==========
     function getSelectedKavling() {
-        return window.selectedKavling || null;
+        // Coba ambil dari window.selectedKavling (script.js)
+        if (window.selectedKavling) return window.selectedKavling;
+        
+        // Coba ambil dari elemen UI jika variabel global belum terupdate
+        const kavlingNameEl = document.querySelector('#kavlingInfoUser4 .val-name');
+        if (kavlingNameEl && kavlingNameEl.textContent && kavlingNameEl.textContent !== '-') {
+            return kavlingNameEl.textContent.trim();
+        }
+        
+        return null;
     }
     
     function showAdminLoading(text) {
@@ -97,11 +106,34 @@
         const dariInput = hoTab.querySelector('.input-mutasi-ho-dari');
         const keInput = hoTab.querySelector('.input-mutasi-ho-ke');
         const tglInput = hoTab.querySelector('.input-mutasi-ho-tgl');
+        const editContainer = document.getElementById('ho-edit-container');
+        const saveBtn = hoTab.querySelector('.btn-save-section');
         
         if (dariInput) dariInput.value = adminData.handover.dari || '';
         if (keInput) keInput.value = adminData.handover.user || '';
         if (tglInput && adminData.handover.tglHandover) {
             tglInput.value = formatDateForInput(adminData.handover.tglHandover);
+        }
+
+        // Lock inputs if data exists
+        if (adminData.handover.dari || adminData.handover.user) {
+            [dariInput, keInput, tglInput].forEach(input => {
+                if (input) {
+                    input.disabled = true;
+                    input.style.opacity = '0.7';
+                }
+            });
+            if (editContainer) editContainer.style.display = 'block';
+            if (saveBtn) saveBtn.style.display = 'none';
+        } else {
+            [dariInput, keInput, tglInput].forEach(input => {
+                if (input) {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            });
+            if (editContainer) editContainer.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'block';
         }
     }
     
@@ -118,7 +150,7 @@
                 );
                 if (masukData.length > 0) {
                     masukInfo.innerHTML = masukData.map(m => 
-                        `<div>${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
+                        `<div style="padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
                     ).join('');
                 } else {
                     masukInfo.innerHTML = '<div class="no-data">Belum ada riwayat mutasi masuk</div>';
@@ -134,12 +166,32 @@
                 const keluarData = adminData.mutasi.filter(m => m.jenis === 'KELUAR');
                 if (keluarData.length > 0) {
                     keluarInfo.innerHTML = keluarData.map(m => 
-                        `<div>${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
+                        `<div style="padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
                     ).join('');
                 } else {
                     keluarInfo.innerHTML = '<div class="no-data">Belum ada riwayat mutasi keluar</div>';
                 }
             }
+        }
+
+        // Tampilkan juga di container utama jika ada (untuk tombol Lihat Data Mutasi)
+        const container = document.getElementById('mutasiHistoryContainer');
+        if (container) {
+            let html = `<div class="mutasi-history-list"><h5>Total ${adminData.mutasi.length} Riwayat Mutasi</h5>`;
+            adminData.mutasi.forEach((m, index) => {
+                html += `
+                    <div style="padding: 10px; border-bottom: 1px solid #334155; margin-bottom: 5px;">
+                        <div style="color: #38bdf8; font-size: 0.8rem;">${m.tanggal || '-'}</div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span>${m.dari || '-'}</span>
+                            <i class="fas fa-arrow-right" style="font-size: 0.7rem; opacity: 0.5;"></i>
+                            <span>${m.ke || '-'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
         }
     }
     
@@ -149,12 +201,35 @@
         
         const listrikInput = utilitasTab.querySelector('#listrikInstallDate');
         const airInput = utilitasTab.querySelector('#airInstallDate');
+        const editContainer = document.getElementById('utility-edit-container');
+        const saveBtn = document.getElementById('btnSaveUtility');
         
         if (listrikInput && adminData.utilitas.tglListrik) {
             listrikInput.value = formatDateForInput(adminData.utilitas.tglListrik);
         }
         if (airInput && adminData.utilitas.tglAir) {
             airInput.value = formatDateForInput(adminData.utilitas.tglAir);
+        }
+
+        // Lock inputs if data exists
+        if (adminData.utilitas.tglListrik || adminData.utilitas.tglAir) {
+            [listrikInput, airInput].forEach(input => {
+                if (input) {
+                    input.disabled = true;
+                    input.style.opacity = '0.7';
+                }
+            });
+            if (editContainer) editContainer.style.display = 'block';
+            if (saveBtn) saveBtn.style.display = 'none';
+        } else {
+            [listrikInput, airInput].forEach(input => {
+                if (input) {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                }
+            });
+            if (editContainer) editContainer.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'block';
         }
     }
     
@@ -278,6 +353,40 @@
                 saveHandoverKunci();
             });
         }
+
+        // Edit HO Button
+        const btnEditHO = document.getElementById('btn-edit-ho');
+        if (btnEditHO) {
+            btnEditHO.addEventListener('click', function() {
+                const hoTab = document.getElementById('tab-ho-user');
+                const inputs = hoTab.querySelectorAll('input');
+                const saveBtn = hoTab.querySelector('.btn-save-section');
+                
+                inputs.forEach(input => {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                });
+                if (saveBtn) saveBtn.style.display = 'block';
+                this.parentElement.style.display = 'none';
+            });
+        }
+
+        // Edit Utility Button
+        const btnEditUtility = document.getElementById('btn-edit-utility');
+        if (btnEditUtility) {
+            btnEditUtility.addEventListener('click', function() {
+                const utilityTab = document.getElementById('tab-utility-install');
+                const inputs = utilityTab.querySelectorAll('input');
+                const saveBtn = document.getElementById('btnSaveUtility');
+                
+                inputs.forEach(input => {
+                    input.disabled = false;
+                    input.style.opacity = '1';
+                });
+                if (saveBtn) saveBtn.style.display = 'block';
+                this.parentElement.style.display = 'none';
+            });
+        }
         
         // Utility Install tab
         const saveUtilityBtn = document.querySelector('#tab-utility-install .btn-save-section');
@@ -346,15 +455,9 @@
                 const targetTab = document.getElementById(`tab-${tabId}`);
                 if (targetTab) targetTab.classList.add('active');
                 
-                // Load data sesuai tab
-                if (getSelectedKavling()) {
-                    setTimeout(() => {
-                        if (tabId === 'ho-user' || tabId === 'utility-install' || 
-                            tabId === 'kunci-masuk' || tabId === 'kunci-keluar') {
-                            loadAdminUtilitasData(getSelectedKavling());
-                        }
-                    }, 200);
-                }
+                // ⚠️ HAPUS: Pemanggilan loadAdminUtilitasData saat pindah tab
+                // Data sudah dimuat sekali saat tombol "Lihat Data Mutasi" ditekan 
+                // atau saat inisialisasi kavling.
             });
         });
     }
