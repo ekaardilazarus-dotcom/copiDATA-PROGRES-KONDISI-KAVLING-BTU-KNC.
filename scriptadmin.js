@@ -1,26 +1,25 @@
-// scriptadmin.js - VERSI 0.25
+// scriptadmin.js - VERSI 1.0 (COMPLETE)
 (function() {
     'use strict';
     
     console.log('=== ADMIN UTILITAS SCRIPT LOADING ===');
     
     // ========== KONFIGURASI ==========
-    // ⚠️ Gunakan URL yang sama dengan script.js
-    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbwxv8arCL1LvcMYMNnGYiIFCB_AzW-VYc9k7DlflMJ8JNexk2cyGZ680GkZWdU17zJqSw/exec';
+    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbzSFK7tTjxYD-Z-UO35ObXnOMIxNdOmiN_YiV4xTvuifuoLY7v4Gs6HMmPn-yHGyJlbmg/exec';
     
     // ========== VARIABEL ==========
     let adminData = {
         handover: null,
-        mutasi: [],
-        utilitas: null
+        utilitas: null,
+        mutasiMasuk: '',
+        mutasiKeluar: '',
+        mutasi: [] // array untuk parsed data
     };
     
     // ========== UTILITY FUNCTIONS ==========
     function getSelectedKavling() {
-        // Coba ambil dari window.selectedKavling (script.js)
         if (window.selectedKavling) return window.selectedKavling;
         
-        // Coba ambil dari elemen UI jika variabel global belum terupdate
         const kavlingNameEl = document.querySelector('#kavlingInfoUser4 .val-name');
         if (kavlingNameEl && kavlingNameEl.textContent && kavlingNameEl.textContent !== '-') {
             return kavlingNameEl.textContent.trim();
@@ -51,6 +50,105 @@
         }
     }
     
+    function validateDateInput(dateStr) {
+        if (!dateStr) return null;
+        
+        const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+        const match = dateStr.match(regex);
+        
+        if (match) {
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10);
+            const year = parseInt(match[3], 10);
+            
+            const date = new Date(year, month - 1, day);
+            if (date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year) {
+                return dateStr;
+            }
+        }
+        
+        return null;
+    }
+    
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        
+        try {
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+                return dateStr;
+            }
+            
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+            
+            return dateStr;
+        } catch (error) {
+            console.error('Date format error:', error);
+            return '';
+        }
+    }
+    
+   function parseMutasiDataFromString(mutasiString) {
+    if (!mutasiString || mutasiString.trim() === '') {
+        return [];
+    }
+    
+    const entries = [];
+    
+    // Split by pipe (|) - dengan trim
+    const entryStrings = mutasiString.split('|').map(entry => entry.trim());
+    
+    // Proses tiap entry
+    entryStrings.forEach((entryStr, index) => {
+        if (entryStr.trim() === '') return;
+        
+        // Split entry by comma
+        const parts = entryStr.split(',');
+        
+        if (parts.length >= 3) {
+            entries.push({
+                dari: parts[0]?.trim() || '',
+                ke: parts[1]?.trim() || '',
+                tanggal: parts[2]?.trim() || '',
+                jenis: '' // akan di-set nanti
+            });
+        }
+    });
+    
+    return entries;
+}
+    
+    function resetAdminUI() {
+        const inputs = document.querySelectorAll('#user4Page input');
+        inputs.forEach(input => {
+            if (input) {
+                input.value = '';
+                input.disabled = false;
+                input.style.opacity = '1';
+            }
+        });
+        
+        const saveButtons = document.querySelectorAll('#user4Page .btn-save-section');
+        saveButtons.forEach(btn => {
+            if (btn) btn.style.display = 'block';
+        });
+        
+        const editContainers = document.querySelectorAll('#user4Page .edit-container');
+        editContainers.forEach(container => {
+            if (container) container.style.display = 'none';
+        });
+        
+        const mutasiInfos = document.querySelectorAll('.prev-mutasi-masuk-info, .prev-mutasi-keluar-info');
+        mutasiInfos.forEach(info => {
+            if (info) info.innerHTML = '<div class="no-data">Belum ada data</div>';
+        });
+    }
+    
     // ========== CORE FUNCTIONS ==========
     async function loadAdminUtilitasData(kavlingName) {
         if (!kavlingName) {
@@ -61,17 +159,29 @@
         showAdminLoading(`Memuat data admin untuk ${kavlingName}...`);
         
         try {
-            // Gunakan fungsi getDataFromServer dari script.js
             const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
                 action: 'getHandoverData',
                 kavling: kavlingName
             });
             
             if (result.success) {
+                // Parse data mutasi dari string separated comma
+                const mutasiMasukEntries = parseMutasiDataFromString(result.mutasiMasuk || '');
+                const mutasiKeluarEntries = parseMutasiDataFromString(result.mutasiKeluar || '');
+                
+                // Beri jenis pada setiap entry
+                mutasiMasukEntries.forEach(entry => entry.jenis = 'MASUK');
+                mutasiKeluarEntries.forEach(entry => entry.jenis = 'KELUAR');
+                
+                // Gabungkan semua mutasi
+                const allMutasi = [...mutasiMasukEntries, ...mutasiKeluarEntries];
+                
                 adminData = {
                     handover: result.handoverData || null,
-                    mutasi: result.mutasiData || [],
-                    utilitas: result.utilitasData || null
+                    utilitas: result.utilitasData || null,
+                    mutasiMasuk: result.mutasiMasuk || '',
+                    mutasiKeluar: result.mutasiKeluar || '',
+                    mutasi: allMutasi
                 };
                 
                 // Update UI
@@ -79,29 +189,26 @@
                 showAdminToast('success', `Data admin untuk ${kavlingName} dimuat`);
             } else {
                 showAdminToast('info', 'Belum ada data admin untuk kavling ini');
+                resetAdminUI();
             }
         } catch (error) {
             console.error('Error loading admin data:', error);
             showAdminToast('error', 'Gagal memuat data admin');
+            resetAdminUI();
         } finally {
             hideAdminLoading();
         }
     }
     
     function updateAdminUI(kavlingName) {
-        // Update HO User tab
         updateHOTab();
-        
-        // Update Mutasi tabs
         updateMutasiTabs();
-        
-        // Update Utilitas tab
         updateUtilitasTab();
     }
     
     function updateHOTab() {
         const hoTab = document.getElementById('tab-ho-user');
-        if (!hoTab || !adminData.handover) return;
+        if (!hoTab) return;
         
         const dariInput = hoTab.querySelector('.input-mutasi-ho-dari');
         const keInput = hoTab.querySelector('.input-mutasi-ho-ke');
@@ -109,14 +216,13 @@
         const editContainer = document.getElementById('ho-edit-container');
         const saveBtn = hoTab.querySelector('.btn-save-section');
         
-        if (dariInput) dariInput.value = adminData.handover.dari || '';
-        if (keInput) keInput.value = adminData.handover.user || '';
-        if (tglInput && adminData.handover.tglHandover) {
+        if (dariInput) dariInput.value = adminData.handover?.dari || '';
+        if (keInput) keInput.value = adminData.handover?.user || '';
+        if (tglInput && adminData.handover?.tglHandover) {
             tglInput.value = formatDateForInput(adminData.handover.tglHandover);
         }
 
-        // Lock inputs if data exists
-        if (adminData.handover.dari || adminData.handover.user) {
+        if (adminData.handover && (adminData.handover.dari || adminData.handover.user)) {
             [dariInput, keInput, tglInput].forEach(input => {
                 if (input) {
                     input.disabled = true;
@@ -137,82 +243,78 @@
         }
     }
     
-    function updateMutasiTabs() {
-        if (!adminData.mutasi || !Array.isArray(adminData.mutasi)) return;
-        
-        // Update mutasi masuk
-        const masukTab = document.getElementById('tab-kunci-masuk');
-        if (masukTab) {
-            const masukInfo = masukTab.querySelector('.prev-mutasi-masuk-info');
-            if (masukInfo) {
-                const masukData = adminData.mutasi.filter(m => 
-                    m.jenis === 'MASUK' || (!m.jenis && m.dari && m.ke)
-                );
-                if (masukData.length > 0) {
-                    masukInfo.innerHTML = masukData.map(m => 
-                        `<div style="padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
-                    ).join('');
-                } else {
-                    masukInfo.innerHTML = '<div class="no-data">Belum ada riwayat mutasi masuk</div>';
-                }
-            }
-        }
-        
-        // Update mutasi keluar
-        const keluarTab = document.getElementById('tab-kunci-keluar');
-        if (keluarTab) {
-            const keluarInfo = keluarTab.querySelector('.prev-mutasi-keluar-info');
-            if (keluarInfo) {
-                const keluarData = adminData.mutasi.filter(m => m.jenis === 'KELUAR');
-                if (keluarData.length > 0) {
-                    keluarInfo.innerHTML = keluarData.map(m => 
-                        `<div style="padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">${m.tanggal || '-'}: ${m.dari || '-'} → ${m.ke || '-'}</div>`
-                    ).join('');
-                } else {
-                    keluarInfo.innerHTML = '<div class="no-data">Belum ada riwayat mutasi keluar</div>';
-                }
-            }
-        }
-
-        // Tampilkan juga di container utama jika ada (untuk tombol Lihat Data Mutasi)
-        const container = document.getElementById('mutasiHistoryContainer');
-        if (container) {
-            let html = `<div class="mutasi-history-list"><h5>Total ${adminData.mutasi.length} Riwayat Mutasi</h5>`;
-            adminData.mutasi.forEach((m, index) => {
-                html += `
-                    <div style="padding: 10px; border-bottom: 1px solid #334155; margin-bottom: 5px;">
-                        <div style="color: #38bdf8; font-size: 0.8rem;">${m.tanggal || '-'}</div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <span>${m.dari || '-'}</span>
-                            <i class="fas fa-arrow-right" style="font-size: 0.7rem; opacity: 0.5;"></i>
-                            <span>${m.ke || '-'}</span>
+ // Update display function untuk format yang lebih rapi
+function updateMutasiTabs() {
+    // Update mutasi masuk
+    const masukTab = document.getElementById('tab-kunci-masuk');
+    if (masukTab) {
+        const masukInfo = masukTab.querySelector('.prev-mutasi-masuk-info');
+        if (masukInfo) {
+            const masukData = adminData.mutasi.filter(m => m.jenis === 'MASUK');
+            if (masukData.length > 0) {
+                masukInfo.innerHTML = masukData.map((m, index) => 
+                    `<div class="mutasi-entry" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="color: #94a3b8; font-size: 0.8rem;">Entry #${index + 1}</span>
+                                <div style="margin-top: 2px;">
+                                    <span style="font-weight: 500;">${m.dari || '-'}</span>
+                                    <i class="fas fa-arrow-right" style="margin: 0 8px; font-size: 0.8rem; opacity: 0.5;"></i>
+                                    <span style="font-weight: 500;">${m.ke || '-'}</span>
+                                </div>
+                            </div>
+                            <span style="color: #38bdf8; font-size: 0.85rem;">${m.tanggal || '-'}</span>
                         </div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
-            container.innerHTML = html;
+                    </div>`
+                ).join('');
+            } else {
+                masukInfo.innerHTML = '<div class="no-data" style="padding: 20px; text-align: center; color: #64748b;">Belum ada riwayat mutasi masuk</div>';
+            }
         }
     }
     
+    // Update mutasi keluar
+    const keluarTab = document.getElementById('tab-kunci-keluar');
+    if (keluarTab) {
+        const keluarInfo = keluarTab.querySelector('.prev-mutasi-keluar-info');
+        if (keluarInfo) {
+            const keluarData = adminData.mutasi.filter(m => m.jenis === 'KELUAR');
+            if (keluarData.length > 0) {
+                keluarInfo.innerHTML = keluarData.map((m, index) => 
+                    `<div class="mutasi-entry" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="color: #94a3b8; font-size: 0.8rem;">Entry #${index + 1}</span>
+                                <div style="margin-top: 2px;">
+                                    <span style="font-weight: 500;">${m.dari || '-'}</span>
+                                    <i class="fas fa-arrow-right" style="margin: 0 8px; font-size: 0.8rem; opacity: 0.5;"></i>
+                                    <span style="font-weight: 500;">${m.ke || '-'}</span>
+                                </div>
+                            </div>
+                            <span style="color: #38bdf8; font-size: 0.85rem;">${m.tanggal || '-'}</span>
+                        </div>
+                    </div>`
+                ).join('');
+            } else {
+                keluarInfo.innerHTML = '<div class="no-data" style="padding: 20px; text-align: center; color: #64748b;">Belum ada riwayat mutasi keluar</div>';
+            }
+        }
+    }
+}
+    
     function updateUtilitasTab() {
         const utilitasTab = document.getElementById('tab-utility-install');
-        if (!utilitasTab || !adminData.utilitas) return;
+        if (!utilitasTab) return;
         
         const listrikInput = utilitasTab.querySelector('#listrikInstallDate');
         const airInput = utilitasTab.querySelector('#airInstallDate');
         const editContainer = document.getElementById('utility-edit-container');
         const saveBtn = document.getElementById('btnSaveUtility');
         
-        if (listrikInput && adminData.utilitas.tglListrik) {
-            listrikInput.value = formatDateForInput(adminData.utilitas.tglListrik);
-        }
-        if (airInput && adminData.utilitas.tglAir) {
-            airInput.value = formatDateForInput(adminData.utilitas.tglAir);
-        }
+        if (listrikInput) listrikInput.value = formatDateForInput(adminData.utilitas?.tglListrik || '');
+        if (airInput) airInput.value = formatDateForInput(adminData.utilitas?.tglAir || '');
 
-        // Lock inputs if data exists
-        if (adminData.utilitas.tglListrik || adminData.utilitas.tglAir) {
+        if (adminData.utilitas && (adminData.utilitas.tglListrik || adminData.utilitas.tglAir)) {
             [listrikInput, airInput].forEach(input => {
                 if (input) {
                     input.disabled = true;
@@ -230,25 +332,6 @@
             });
             if (editContainer) editContainer.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'block';
-        }
-    }
-    
-    function formatDateForInput(dateStr) {
-        if (!dateStr) return '';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) {
-                // Jika sudah format dd/mm/yyyy
-                if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-                return '';
-            }
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        } catch (error) {
-            console.error('Date format error:', error);
-            return '';
         }
     }
     
@@ -276,6 +359,11 @@
             return;
         }
         
+        if (tgl && !validateDateInput(tgl)) {
+            showAdminToast('warning', 'Format tanggal tidak valid! Gunakan dd/mm/yyyy');
+            return;
+        }
+        
         showAdminLoading('Menyimpan data handover...');
         
         try {
@@ -284,15 +372,14 @@
                 kavling: kavlingName,
                 tglHandover: tgl,
                 dari: dari,
-                ke: ke,
-                user: 'user4'
+                ke: ke
             });
             
             if (result.success) {
                 showAdminToast('success', 'Data handover berhasil disimpan!');
                 await loadAdminUtilitasData(kavlingName);
             } else {
-                showAdminToast('error', 'Gagal menyimpan: ' + result.message);
+                showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error saving handover:', error);
@@ -317,6 +404,16 @@
             return;
         }
         
+        if (listrikDate && !validateDateInput(listrikDate)) {
+            showAdminToast('warning', 'Format tanggal listrik tidak valid! Gunakan dd/mm/yyyy');
+            return;
+        }
+        
+        if (airDate && !validateDateInput(airDate)) {
+            showAdminToast('warning', 'Format tanggal air tidak valid! Gunakan dd/mm/yyyy');
+            return;
+        }
+        
         showAdminLoading('Menyimpan data utilitas...');
         
         try {
@@ -324,14 +421,14 @@
                 action: 'saveUtilitasData',
                 kavling: kavlingName,
                 listrikDate: listrikDate,
-                airDate: airDate,
-                user: 'user4'
+                airDate: airDate
             });
             
             if (result.success) {
                 showAdminToast('success', 'Data utilitas berhasil disimpan!');
+                await loadAdminUtilitasData(kavlingName);
             } else {
-                showAdminToast('error', 'Gagal menyimpan: ' + result.message);
+                showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error saving utilitas:', error);
@@ -341,7 +438,91 @@
         }
     }
     
+    async function saveMutasi(jenisMutasi) {
+        const kavlingName = getSelectedKavling();
+        if (!kavlingName) {
+            showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
+            return;
+        }
+        
+        let dariInputId, keInputId, tglInputId;
+        
+        if (jenisMutasi === 'MASUK') {
+            dariInputId = 'mutasiMasukDari';
+            keInputId = 'mutasiMasukKe';
+            tglInputId = 'mutasiMasukTgl';
+        } else {
+            dariInputId = 'mutasiKeluarDari';
+            keInputId = 'mutasiKeluarKe';
+            tglInputId = 'mutasiKeluarTgl';
+        }
+        
+        const dari = document.getElementById(dariInputId)?.value.trim() || '';
+        const ke = document.getElementById(keInputId)?.value.trim() || '';
+        const tgl = document.getElementById(tglInputId)?.value.trim() || '';
+        
+        if (!dari || !ke) {
+            showAdminToast('warning', 'Nama pemberi dan penerima harus diisi!');
+            return;
+        }
+        
+        if (tgl && !validateDateInput(tgl)) {
+            showAdminToast('warning', 'Format tanggal tidak valid! Gunakan dd/mm/yyyy');
+            return;
+        }
+        
+        showAdminLoading(`Menyimpan mutasi ${jenisMutasi.toLowerCase()}...`);
+        
+        try {
+            const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
+                action: 'saveMutasi',
+                kavling: kavlingName,
+                jenis: jenisMutasi,
+                pemberi: dari,
+                penerima: ke,
+                tanggal: tgl
+            });
+            
+            if (result.success) {
+                showAdminToast('success', `Mutasi ${jenisMutasi.toLowerCase()} berhasil disimpan!`);
+                
+                // Clear form inputs
+                document.getElementById(dariInputId).value = '';
+                document.getElementById(keInputId).value = '';
+                document.getElementById(tglInputId).value = '';
+                
+                // Refresh data
+                await loadAdminUtilitasData(kavlingName);
+            } else {
+                showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error(`Error saving mutasi ${jenisMutasi}:`, error);
+            showAdminToast('error', 'Error: ' + error.message);
+        } finally {
+            hideAdminLoading();
+        }
+    }
+    
     // ========== SETUP FUNCTIONS ==========
+    function setupMutasiEventListeners() {
+        const btnSaveMutasiMasuk = document.getElementById('btnSaveMutasiMasuk');
+        if (btnSaveMutasiMasuk) {
+            btnSaveMutasiMasuk.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveMutasi('MASUK');
+            });
+        }
+        
+        const btnSaveMutasiKeluar = document.getElementById('btnSaveMutasiKeluar');
+        if (btnSaveMutasiKeluar) {
+            btnSaveMutasiKeluar.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveMutasi('KELUAR');
+            });
+        }
+    }
+    
     function setupAdminEventListeners() {
         console.log('Setting up admin event listeners...');
         
@@ -397,7 +578,8 @@
             });
         }
         
-        // ⚠️ HAPUS: Bagian untuk save meteran checkbox - TIDAK PERLU di admin
+        // Mutasi event listeners
+        setupMutasiEventListeners();
         
         // Fetch Mutasi Data Button
         const fetchBtn = document.getElementById('btnFetchMutasiData');
@@ -422,7 +604,6 @@
                 if (kavling) {
                     loadAdminUtilitasData(kavling);
                     
-                    // Tampilkan container riwayat
                     const historyContainer = document.getElementById('mutasiHistoryContainer');
                     if (historyContainer) {
                         historyContainer.style.display = 
@@ -434,200 +615,7 @@
             });
         }
     }
-    // Tambahkan fungsi helper untuk validasi format tanggal
-function validateDateInput(dateStr) {
-    if (!dateStr) return null;
     
-    // Cek format dd/mm/yyyy
-    const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    const match = dateStr.match(regex);
-    
-    if (match) {
-        const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
-        const year = parseInt(match[3], 10);
-        
-        // Validasi tanggal
-        const date = new Date(year, month - 1, day);
-        if (date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year) {
-            return dateStr; // Return as is
-        }
-    }
-    
-    return null;
-}
-
-function formatDateForInput(dateStr) {
-    if (!dateStr) return '';
-    
-    try {
-        // Jika sudah format dd/mm/yyyy, return as is
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
-            return dateStr;
-        }
-        
-        // Coba parse sebagai Date
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-        
-        return dateStr; // Return as string jika tidak bisa diparse
-    } catch (error) {
-        console.error('Date format error:', error);
-        return '';
-    }
-}
-
-// Update saveHandoverKunci dengan validasi tanggal
-async function saveHandoverKunci() {
-    const kavlingName = getSelectedKavling();
-    if (!kavlingName) {
-        showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
-        return;
-    }
-    
-    const hoTab = document.getElementById('tab-ho-user');
-    if (!hoTab) return;
-    
-    const dariInput = hoTab.querySelector('.input-mutasi-ho-dari');
-    const keInput = hoTab.querySelector('.input-mutasi-ho-ke');
-    const tglInput = hoTab.querySelector('.input-mutasi-ho-tgl');
-    
-    const dari = dariInput?.value.trim() || '';
-    const ke = keInput?.value.trim() || '';
-    const tgl = tglInput?.value || '';
-    
-    if (!dari || !ke) {
-        showAdminToast('warning', 'Nama pemberi dan penerima harus diisi!');
-        return;
-    }
-    
-    // Validasi format tanggal jika diisi
-    if (tgl && !validateDateInput(tgl)) {
-        showAdminToast('warning', 'Format tanggal tidak valid! Gunakan format dd/mm/yyyy (contoh: 25/12/2024)');
-        return;
-    }
-    
-    showAdminLoading('Menyimpan data handover...');
-    
-    try {
-        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
-            action: 'saveHandoverKunci',
-            kavling: kavlingName,
-            tglHandover: tgl,
-            dari: dari,
-            ke: ke
-            // Note: parameter 'user' tidak digunakan di backend, bisa dihapus
-        });
-        
-        if (result.success) {
-            showAdminToast('success', 'Data handover berhasil disimpan!');
-            await loadAdminUtilitasData(kavlingName);
-        } else {
-            showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
-        }
-    } catch (error) {
-        console.error('Error saving handover:', error);
-        showAdminToast('error', 'Error: ' + error.message);
-    } finally {
-        hideAdminLoading();
-    }
-}
-
-// Update saveUtilitasDates dengan validasi tanggal
-async function saveUtilitasDates() {
-    const kavlingName = getSelectedKavling();
-    if (!kavlingName) {
-        showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
-        return;
-    }
-    
-    const listrikDate = document.getElementById('listrikInstallDate')?.value || '';
-    const airDate = document.getElementById('airInstallDate')?.value || '';
-    
-    if (!listrikDate && !airDate) {
-        showAdminToast('warning', 'Tidak ada data yang diubah');
-        return;
-    }
-    
-    // Validasi format tanggal
-    if (listrikDate && !validateDateInput(listrikDate)) {
-        showAdminToast('warning', 'Format tanggal listrik tidak valid! Gunakan format dd/mm/yyyy');
-        return;
-    }
-    
-    if (airDate && !validateDateInput(airDate)) {
-        showAdminToast('warning', 'Format tanggal air tidak valid! Gunakan format dd/mm/yyyy');
-        return;
-    }
-    
-    showAdminLoading('Menyimpan data utilitas...');
-    
-    try {
-        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
-            action: 'saveUtilitasData',
-            kavling: kavlingName,
-            listrikDate: listrikDate,
-            airDate: airDate
-        });
-        
-        if (result.success) {
-            showAdminToast('success', 'Data utilitas berhasil disimpan!');
-            await loadAdminUtilitasData(kavlingName);
-        } else {
-            showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
-        }
-    } catch (error) {
-        console.error('Error saving utilitas:', error);
-        showAdminToast('error', 'Error: ' + error.message);
-    } finally {
-        hideAdminLoading();
-    }
-}
-
-// Update fungsi loadAdminUtilitasData
-async function loadAdminUtilitasData(kavlingName) {
-    if (!kavlingName) {
-        showAdminToast('warning', 'Pilih kavling terlebih dahulu');
-        return;
-    }
-    
-    showAdminLoading(`Memuat data admin untuk ${kavlingName}...`);
-    
-    try {
-        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
-            action: 'getHandoverData',
-            kavling: kavlingName
-        });
-        
-        if (result.success) {
-            adminData = {
-                handover: result.handoverData || null,
-                utilitas: result.utilitasData || null,
-                mutasiMasuk: result.mutasiMasuk || '',
-                mutasiKeluar: result.mutasiKeluar || ''
-            };
-            
-            // Update UI dengan format tanggal yang benar
-            updateAdminUI(kavlingName);
-            showAdminToast('success', `Data admin untuk ${kavlingName} dimuat`);
-        } else {
-            showAdminToast('info', 'Belum ada data admin untuk kavling ini');
-            // Reset UI
-            resetAdminUI();
-        }
-    } catch (error) {
-        console.error('Error loading admin data:', error);
-        showAdminToast('error', 'Gagal memuat data admin');
-        resetAdminUI();
-    } finally {
-        hideAdminLoading();
-    }
-}
     function setupAdminTabs() {
         const adminPage = document.getElementById('user4Page');
         if (!adminPage) return;
@@ -639,18 +627,12 @@ async function loadAdminUtilitasData(kavlingName) {
             button.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
                 
-                // Remove active from all
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
                 
-                // Add active to clicked
                 this.classList.add('active');
                 const targetTab = document.getElementById(`tab-${tabId}`);
                 if (targetTab) targetTab.classList.add('active');
-                
-                // ⚠️ HAPUS: Pemanggilan loadAdminUtilitasData saat pindah tab
-                // Data sudah dimuat sekali saat tombol "Lihat Data Mutasi" ditekan 
-                // atau saat inisialisasi kavling.
             });
         });
     }
@@ -659,12 +641,10 @@ async function loadAdminUtilitasData(kavlingName) {
     function integrateWithMainScript() {
         console.log('Integrating with main script.js...');
         
-        // Override loadAdminUtilitasData jika belum ada
         if (!window.loadAdminUtilitasData) {
             window.loadAdminUtilitasData = loadAdminUtilitasData;
         }
         
-        // Tambahkan fungsi untuk tombol view mutation history
         window.showMutationHistory = function() {
             const kavling = getSelectedKavling();
             if (kavling) {
@@ -680,9 +660,7 @@ async function loadAdminUtilitasData(kavlingName) {
         try {
             console.log('=== INITIALIZING ADMIN UTILITAS ===');
             
-            // Tunggu sedikit untuk main script
             setTimeout(() => {
-                // Setup hanya jika di halaman user4
                 if (document.getElementById('user4Page')) {
                     setupAdminEventListeners();
                     setupAdminTabs();
@@ -690,7 +668,6 @@ async function loadAdminUtilitasData(kavlingName) {
                     
                     console.log('✅ Admin Utilitas initialized successfully');
                     
-                    // Jika ada kavling yang sudah dipilih, load data
                     if (getSelectedKavling()) {
                         setTimeout(() => {
                             loadAdminUtilitasData(getSelectedKavling());
@@ -709,7 +686,8 @@ async function loadAdminUtilitasData(kavlingName) {
         init: initAdminUtilitas,
         loadData: loadAdminUtilitasData,
         saveHandover: saveHandoverKunci,
-        saveUtilitas: saveUtilitasDates
+        saveUtilitas: saveUtilitasDates,
+        saveMutasi: saveMutasi
     };
     
     // Auto-init saat DOM siap
@@ -719,7 +697,6 @@ async function loadAdminUtilitasData(kavlingName) {
             initAdminUtilitas();
         });
     } else {
-        // Jika DOM sudah siap
         setTimeout(initAdminUtilitas, 300);
     }
     
