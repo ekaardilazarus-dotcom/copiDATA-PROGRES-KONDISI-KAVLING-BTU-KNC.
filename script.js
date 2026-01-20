@@ -1660,6 +1660,11 @@ function loadProgressData(progressData) {
   const pageElement = document.getElementById(rolePage);
   if (!pageElement) return;
 
+  // Tentukan suffix ID berdasarkan role
+  let idSuffix = '';
+  if (currentRole === 'user2') idSuffix = '2';
+  else if (currentRole === 'user3') idSuffix = '3';
+
   // ===== Tahap 1 =====
   if (progressData.tahap1) {
     // SISTEM PEMBUANGAN
@@ -1667,7 +1672,7 @@ function loadProgressData(progressData) {
     const taskItem = pageElement.querySelector('.waste-system');
     if (taskItem) {
       const buttons = taskItem.querySelectorAll('.system-btn');
-      const hiddenInput = taskItem.querySelector('#wasteSystemInput');
+      const hiddenInput = taskItem.querySelector(`#wasteSystemInput${idSuffix}`);
 
       // ✅ Reset dulu
       buttons.forEach(btn => {
@@ -2176,25 +2181,29 @@ function findCheckboxByTaskName(taskName, tahap, pageId) {
   if (!pageElement) return null;
 
   const cleanTaskName = taskName.toUpperCase().trim();
+  
+  // Cari semua checkbox di tahap yang sesuai
   const checkboxes = pageElement.querySelectorAll(`[data-tahap="${tahap}"] .sub-task[type="checkbox"]`);
 
   for (let cb of checkboxes) {
+    // Coba dengan data-task attribute
     if (cb.getAttribute('data-task') === cleanTaskName) {
       return cb;
     }
-  }
-
-  // Fallback: search by text content if data-task doesn't match
-  const cleanSearch = cleanTaskName.replace(/[^A-Z0-9]/g, '');
-  for (let cb of checkboxes) {
+    
+    // Coba dengan mencari di label text
     const label = cb.closest('label');
     if (label) {
-      const labelText = label.textContent.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      if (labelText.includes(cleanSearch) || cleanSearch.includes(labelText)) {
+      const labelText = label.textContent.toUpperCase().trim();
+      const cleanSearch = cleanTaskName.replace(/[^A-Z0-9]/g, '');
+      const cleanLabel = labelText.replace(/[^A-Z0-9]/g, '');
+      
+      if (cleanLabel.includes(cleanSearch) || cleanSearch.includes(cleanLabel)) {
         return cb;
       }
     }
   }
+  
   return null;
 }
 
@@ -3733,48 +3742,46 @@ function setupPelaksanaTabs() {
     const tabBtns = page.querySelectorAll('.admin-tab-btn');
     const tabContents = page.querySelectorAll('.tab-content-item');
 
-    console.log(`Setting up pelaksana tabs for ${role}, count:`, tabBtns.length);
+    console.log(`Setting up tabs for ${role}`);
 
-    // Set active tab pertama kali jika belum ada yang active
-    if (tabBtns.length > 0 && !page.querySelector('.admin-tab-btn.active')) {
-      tabBtns[0].classList.add('active');
-      const firstTabId = tabBtns[0].getAttribute('data-tab');
-      const firstTab = page.querySelector(`#tab-${firstTabId}`);
-      if (firstTab) firstTab.classList.add('active');
-      page.setAttribute('data-active-tab', firstTabId);
-    } else {
-      const currentActiveBtn = page.querySelector('.admin-tab-btn.active');
-      if (currentActiveBtn) {
-        page.setAttribute('data-active-tab', currentActiveBtn.getAttribute('data-tab'));
-      }
-    }
-
+    // Untuk user2 dan user3, kita perlu mapping ID yang berbeda
     tabBtns.forEach(btn => {
-      // Remove old listener and add new one
       const newBtn = btn.cloneNode(true);
       btn.parentNode.replaceChild(newBtn, btn);
 
       newBtn.addEventListener('click', function() {
-        const tabId = this.getAttribute('data-tab');
-        console.log(`Tab clicked for ${role}:`, tabId);
+        let tabId = this.getAttribute('data-tab');
+        
+        // Mapping untuk user2 dan user3
+        if (role === 'user2') {
+          tabId = tabId.replace('user2-', '');
+        } else if (role === 'user3') {
+          tabId = tabId.replace('user3-', '');
+        }
 
-        // Re-select fresh buttons and contents after clones
+        console.log(`Tab clicked for ${role}: ${tabId}`);
+
         const allBtns = page.querySelectorAll('.admin-tab-btn');
         const allContents = page.querySelectorAll('.tab-content-item');
 
-        // Reset
         allBtns.forEach(b => b.classList.remove('active'));
         allContents.forEach(c => c.classList.remove('active'));
 
-        // Set active
         this.classList.add('active');
-        const targetTab = page.querySelector(`#tab-${tabId}`);
+        
+        // Cari tab dengan ID yang sesuai berdasarkan role
+        let targetTab;
+        if (role === 'user1') {
+          targetTab = page.querySelector(`#tab-${tabId}`);
+        } else if (role === 'user2') {
+          targetTab = page.querySelector(`#tab-user2-${tabId}`);
+        } else if (role === 'user3') {
+          targetTab = page.querySelector(`#tab-user3-${tabId}`);
+        }
+        
         if (targetTab) {
           targetTab.classList.add('active');
         }
-
-        // Update parent data attribute
-        page.setAttribute('data-active-tab', tabId);
       });
     });
   });
