@@ -1,4 +1,4 @@
-// scriptadmin.js - VERSI 1.0 (COMPLETE)
+// scriptadmin.js - VERSI 0.51
 (function() {
     'use strict';
     
@@ -311,16 +311,34 @@ function updateMutasiTabs() {
         const editContainer = document.getElementById('utility-edit-container');
         const saveBtn = document.getElementById('btnSaveUtility');
         
-        if (listrikInput) listrikInput.value = formatDateForInput(adminData.utilitas?.tglListrik || '');
-        if (airInput) airInput.value = formatDateForInput(adminData.utilitas?.tglAir || '');
+        const listrikVal = formatDateForInput(adminData.utilitas?.tglListrik || '');
+        const airVal = formatDateForInput(adminData.utilitas?.tglAir || '');
 
-        if (adminData.utilitas && (adminData.utilitas.tglListrik || adminData.utilitas.tglAir)) {
+        console.log('🔍 DEBUG - Update Utilitas Tab:', {
+            hasUtilitasData: !!adminData.utilitas,
+            tglListrikRaw: adminData.utilitas?.tglListrik,
+            tglAirRaw: adminData.utilitas?.tglAir,
+            tglListrikFormatted: listrikVal,
+            tglAirFormatted: airVal
+        });
+        
+        if (listrikInput) listrikInput.value = listrikVal;
+        if (airInput) airInput.value = airVal;
+
+        if (listrikVal || airVal) {
             [listrikInput, airInput].forEach(input => {
                 if (input) {
                     input.disabled = true;
                     input.style.opacity = '0.7';
                 }
             });
+            
+            // Sembunyikan tombol "Hari Ini" jika sudah ada isian
+            const todayButtons = utilitasTab.querySelectorAll('.btn-today-admin');
+            todayButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+
             if (editContainer) editContainer.style.display = 'block';
             if (saveBtn) saveBtn.style.display = 'none';
         } else {
@@ -330,6 +348,13 @@ function updateMutasiTabs() {
                     input.style.opacity = '1';
                 }
             });
+
+            // Tampilkan kembali tombol "Hari Ini" jika kosong
+            const todayButtons = utilitasTab.querySelectorAll('.btn-today-admin');
+            todayButtons.forEach(btn => {
+                btn.style.display = 'block';
+            });
+
             if (editContainer) editContainer.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'block';
         }
@@ -399,6 +424,8 @@ function updateMutasiTabs() {
         const listrikDate = document.getElementById('listrikInstallDate')?.value || '';
         const airDate = document.getElementById('airInstallDate')?.value || '';
         
+        console.log('Saving Utilitas:', { kavlingName, listrikDate, airDate });
+        
         if (!listrikDate && !airDate) {
             showAdminToast('warning', 'Tidak ada data yang diubah');
             return;
@@ -417,21 +444,52 @@ function updateMutasiTabs() {
         showAdminLoading('Menyimpan data utilitas...');
         
         try {
+            // ⚠️ PERHATIAN: Gunakan saveHandoverKunci untuk utilitas
+            // Karena di sheet handoverkunci:
+            // - Kolom E (5): Tanggal Pemasangan AIR (tglAir)
+            // - Kolom F (6): Tanggal Pemasangan Listrik (tglListrik)
             const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
-                action: 'saveUtilitasData',
+                action: 'saveHandoverKunci',
                 kavling: kavlingName,
-                listrikDate: listrikDate,
-                airDate: airDate
+                tglHandover: '',     // Kolom B - kosongkan karena ini utilitas
+                dari: '',            // Kolom C - kosongkan karena ini utilitas
+                ke: '',              // Kolom D - kosongkan karena ini utilitas
+                tglAir: airDate,     // Kolom E - Tanggal Air
+                tglListrik: listrikDate // Kolom F - Tanggal Listrik
             });
+
+            console.log('🔍 DEBUG - Server Response:', result);
             
-            if (result.success) {
+     if (result.success) {
                 showAdminToast('success', 'Data utilitas berhasil disimpan!');
-                await loadAdminUtilitasData(kavlingName);
+
+                // Refresh data setelah 500ms
+                setTimeout(() => {
+                    loadAdminUtilitasData(kavlingName);
+                }, 500);
+
             } else {
                 showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
+                console.error('Server error details:', result);
+
+                // Fallback: Coba endpoint saveUtilitasData jika ada
+                console.log('Trying fallback to saveUtilitasData...');
+                const result2 = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
+                    action: 'saveUtilitasData',
+                    kavling: kavlingName,
+                    listrikDate: listrikDate,
+                    airDate: airDate
+                });
+
+                if (result2.success) {
+                    showAdminToast('success', 'Data utilitas berhasil disimpan (fallback)!');
+                    setTimeout(() => {
+                        loadAdminUtilitasData(kavlingName);
+                    }, 500);
+                }
             }
         } catch (error) {
-            console.error('Error saving utilitas:', error);
+            console.error('❌ Error saving utilitas:', error);
             showAdminToast('error', 'Error: ' + error.message);
         } finally {
             hideAdminLoading();
@@ -522,15 +580,87 @@ function updateMutasiTabs() {
             });
         }
     }
+    // ========== SETUP FUNCTIONS ==========
+    function setupUtilityTodayButtons() {
+        console.log('Setting up utility today buttons...');
+
+        // Tombol "Hari Ini" untuk Listrik
+        const btnTodayListrik = document.querySelector('.btn-today-admin[data-target="#listrikInstallDate"]');
+        if (btnTodayListrik) {
+            btnTodayListrik.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+
+                document.getElementById('listrikInstallDate').value = `${day}/${month}/${year}`;
+
+                // Jika ada flatpickr instance, update juga
+                if (window.flatpickrInstances && window.flatpickrInstances['listrikInstallDate']) {
+                    window.flatpickrInstances['listrikInstallDate'].setDate(today, true);
+                }
+            });
+        }
+
+        // Tombol "Hari Ini" untuk Air
+        const btnTodayAir = document.querySelector('.btn-today-admin[data-target="#airInstallDate"]');
+        if (btnTodayAir) {
+            btnTodayAir.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+
+                document.getElementById('airInstallDate').value = `${day}/${month}/${year}`;
+
+                // Jika ada flatpickr instance, update juga
+                if (window.flatpickrInstances && window.flatpickrInstances['airInstallDate']) {
+                    window.flatpickrInstances['airInstallDate'].setDate(today, true);
+                }
+            });
+        }
+
+        // Tombol "Hari Ini" untuk Tanggal Handover
+        const btnTodayHandover = document.querySelector('.btn-today-admin[data-target=".input-mutasi-ho-tgl"]');
+        if (btnTodayHandover) {
+            btnTodayHandover.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const today = new Date();
+                const day = String(today.getDate()).padStart(2, '0');
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const year = today.getFullYear();
+
+                const handoverInput = document.querySelector('.input-mutasi-ho-tgl');
+                if (handoverInput) {
+                    handoverInput.value = `${day}/${month}/${year}`;
+
+                    // Jika ada flatpickr instance, update juga
+                    if (window.flatpickrInstances && handoverInput.id && window.flatpickrInstances[handoverInput.id]) {
+                        window.flatpickrInstances[handoverInput.id].setDate(today, true);
+                    }
+                }
+            });
+        }
+    }
     
     function setupAdminEventListeners() {
         console.log('Setting up admin event listeners...');
-        
+        setupUtilityTodayButtons();
         // HO User tab
-        const saveHOButton = document.querySelector('#tab-ho-user .btn-save-section');
+        const hoTab = document.getElementById('tab-ho-user');
+        const saveHOButton = hoTab ? hoTab.querySelector('.btn-save-section') : null;
         if (saveHOButton) {
             saveHOButton.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 saveHandoverKunci();
             });
         }
@@ -539,9 +669,10 @@ function updateMutasiTabs() {
         const btnEditHO = document.getElementById('btn-edit-ho');
         if (btnEditHO) {
             btnEditHO.addEventListener('click', function() {
-                const hoTab = document.getElementById('tab-ho-user');
-                const inputs = hoTab.querySelectorAll('input');
-                const saveBtn = hoTab.querySelector('.btn-save-section');
+                const targetHoTab = document.getElementById('tab-ho-user');
+                const inputs = targetHoTab.querySelectorAll('input');
+                const saveBtn = targetHoTab.querySelector('.btn-save-section');
+                const todayButtons = targetHoTab.querySelectorAll('.btn-today-admin');
                 
                 inputs.forEach(input => {
                     input.disabled = false;
@@ -559,33 +690,46 @@ function updateMutasiTabs() {
                 const utilityTab = document.getElementById('tab-utility-install');
                 const inputs = utilityTab.querySelectorAll('input');
                 const saveBtn = document.getElementById('btnSaveUtility');
+                const todayButtons = utilityTab.querySelectorAll('.btn-today-admin');
                 
                 inputs.forEach(input => {
                     input.disabled = false;
                     input.style.opacity = '1';
                 });
+                
+                todayButtons.forEach(btn => {
+                    btn.style.display = 'block';
+                });
+
                 if (saveBtn) saveBtn.style.display = 'block';
                 this.parentElement.style.display = 'none';
             });
         }
         
         // Utility Install tab
-        const saveUtilityBtn = document.querySelector('#tab-utility-install .btn-save-section');
+        const saveUtilityBtn = document.getElementById('btnSaveUtility');
         if (saveUtilityBtn) {
-            saveUtilityBtn.addEventListener('click', function(e) {
+            // Clone dan replace untuk menghindari multiple event listeners
+            const newSaveUtilityBtn = saveUtilityBtn.cloneNode(true);
+            saveUtilityBtn.parentNode.replaceChild(newSaveUtilityBtn, saveUtilityBtn);
+
+            newSaveUtilityBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                console.log('Save utility button clicked');
                 saveUtilitasDates();
             });
         }
-        
+
         // Mutasi event listeners
         setupMutasiEventListeners();
-        
+
         // Fetch Mutasi Data Button
         const fetchBtn = document.getElementById('btnFetchMutasiData');
         if (fetchBtn) {
             fetchBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const kavling = getSelectedKavling();
                 if (kavling) {
                     loadAdminUtilitasData(kavling);
@@ -594,16 +738,17 @@ function updateMutasiTabs() {
                 }
             });
         }
-        
+
         // View Mutation History Button
         const viewHistoryBtn = document.getElementById('btnViewMutationHistory');
         if (viewHistoryBtn) {
             viewHistoryBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 const kavling = getSelectedKavling();
                 if (kavling) {
                     loadAdminUtilitasData(kavling);
-                    
+
                     const historyContainer = document.getElementById('mutasiHistoryContainer');
                     if (historyContainer) {
                         historyContainer.style.display = 
@@ -636,15 +781,63 @@ function updateMutasiTabs() {
             });
         });
     }
+
+    // Fungsi helper untuk semua tombol "Hari Ini"
+    function setupAllTodayButtons() {
+        console.log('Setting up all "Today" buttons...');
+
+        // Fungsi untuk mendapatkan tanggal hari ini dalam format dd/mm/yyyy
+        function getTodayDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Tangkap semua klik tombol "Hari Ini"
+        document.addEventListener('click', function(e) {
+            // Cek jika yang diklik adalah tombol "Hari Ini"
+            if (e.target.classList.contains('btn-today-admin') || 
+                e.target.closest('.btn-today-admin')) {
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const button = e.target.classList.contains('btn-today-admin') ? 
+                              e.target : e.target.closest('.btn-today-admin');
+
+                const targetSelector = button.getAttribute('data-target');
+                if (!targetSelector) return;
+
+                try {
+                    const targetInput = document.querySelector(targetSelector);
+                    if (targetInput) {
+                        const todayDate = getTodayDate();
+                        targetInput.value = todayDate;
+
+                        // Update Flatpickr jika ada
+                        if (window.flatpickrInstances && targetInput.id && window.flatpickrInstances[targetInput.id]) {
+                            window.flatpickrInstances[targetInput.id].setDate(new Date(), true);
+                        }
+
+                        console.log(`Set ${targetSelector} to today: ${todayDate}`);
+                    }
+                } catch (error) {
+                    console.error('Error setting today date:', error);
+                }
+            }
+        });
+    }
     
     // ========== INTEGRATION WITH MAIN SCRIPT ==========
     function integrateWithMainScript() {
         console.log('Integrating with main script.js...');
-        
+
         if (!window.loadAdminUtilitasData) {
             window.loadAdminUtilitasData = loadAdminUtilitasData;
         }
-        
+
         window.showMutationHistory = function() {
             const kavling = getSelectedKavling();
             if (kavling) {
@@ -653,7 +846,68 @@ function updateMutasiTabs() {
                 showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
             }
         };
+
+        // Override fungsi "setToday" dari script.js jika ada konflik
+        if (window.setToday && typeof window.setToday === 'function') {
+            const originalSetToday = window.setToday;
+            window.setToday = function(inputId) {
+                try {
+                    const today = new Date();
+                    const day = String(today.getDate()).padStart(2, '0');
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const year = today.getFullYear();
+
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        input.value = `${day}/${month}/${year}`;
+                        return true;
+                    }
+                    return originalSetToday(inputId);
+                } catch (error) {
+                    console.error('Error in setToday override:', error);
+                    return originalSetToday(inputId);
+                }
+            };
+        }
     }
+
+    // ========== DEBUG FUNCTIONS ==========
+    function testSaveUtilitas() {
+        const kavlingName = getSelectedKavling();
+        if (!kavlingName) {
+            console.error('No kavling selected');
+            return;
+        }
+
+        // Set test dates
+        document.getElementById('listrikInstallDate').value = '25/12/2024';
+        document.getElementById('airInstallDate').value = '26/12/2024';
+
+        console.log('=== TEST SAVE UTILITAS ===');
+        console.log('Kavling:', kavlingName);
+        console.log('Listrik Date:', '25/12/2024');
+        console.log('Air Date:', '26/12/2024');
+
+        // Test langsung ke server
+        const params = new URLSearchParams({
+            action: 'saveHandoverKunci',
+            kavling: kavlingName,
+            tglHandover: '',
+            dari: '',
+            ke: '',
+            tglAir: '26/12/2024',
+            tglListrik: '25/12/2024'
+        });
+
+        const testUrl = `${ADMIN_UTILITAS_URL}?${params.toString()}`;
+        console.log('Test URL:', testUrl);
+
+        // Buka di new tab untuk testing
+        window.open(testUrl, '_blank');
+    }
+
+    // Export untuk testing
+    window.testSaveUtilitas = testSaveUtilitas;
     
     // ========== INITIALIZATION ==========
     function initAdminUtilitas() {
@@ -664,6 +918,7 @@ function updateMutasiTabs() {
                 if (document.getElementById('user4Page')) {
                     setupAdminEventListeners();
                     setupAdminTabs();
+                    setupAllTodayButtons(); 
                     integrateWithMainScript();
                     
                     console.log('✅ Admin Utilitas initialized successfully');
@@ -674,7 +929,7 @@ function updateMutasiTabs() {
                         }, 500);
                     }
                 }
-            }, 500);
+            }, 800);
             
         } catch (error) {
             console.error('❌ Failed to initialize Admin Utilitas:', error);
