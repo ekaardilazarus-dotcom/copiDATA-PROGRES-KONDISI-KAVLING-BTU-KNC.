@@ -1,4 +1,4 @@
-// versi 0.442
+// versi 0.445
 const USER_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx08smViAL2fT_P0ZCljaM8NGyDPZvhZiWt2EeIy1MYsjoWnSMEyXwoS6jydO-_J8OH/exec';
 const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSFK7tTjxYD-Z-UO35ObXnOMIxNdOmiN_YiV4xTvuifuoLY7v4Gs6HMmPn-yHGyJlbmg/exec';
 
@@ -1055,16 +1055,28 @@ function enableAllInputs() {
     input.style.opacity = '1';
     input.style.cursor = 'text';
     input.style.pointerEvents = 'auto';
+
+    // Tambahkan listener untuk input agar update progress saat mengetik/memilih tanggal
+    if (!input.hasAttribute('data-listener-added')) {
+      const updateFn = () => {
+        console.log(`Input ${input.id || input.getAttribute('data-task')} changed`);
+        updateProgress(pageId);
+      };
+      input.addEventListener('input', updateFn);
+      input.addEventListener('change', updateFn);
+      input.setAttribute('data-listener-added', 'true');
+    }
   });
 
-  // 4. Enable tombol save
-  const saveButtons = page.querySelectorAll('.btn-save-section');
-  saveButtons.forEach(btn => {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
-    btn.style.pointerEvents = 'auto';
-  });
+    // 4. Enable tombol save
+    const saveButtons = page.querySelectorAll('.btn-save-section');
+    saveButtons.forEach(btn => {
+      if (btn.id === 'btnSaveUtility') return; // Skip specialized admin buttons
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.style.pointerEvents = 'auto';
+    });
 
   console.log(`✅ Enabled: ${checkboxes.length} checkboxes, ${stateButtons.length} state buttons, ${saveButtons.length} save buttons`);
 
@@ -5155,33 +5167,20 @@ async function saveKeyDelivery() {
     return;
   }
 
-  // Cari elemen-elemen di tab baru
-  const deliverySection = document.getElementById('tab-delivery');
-  if (!deliverySection) {
-    showToast('error', 'Tab penyerahan kunci tidak ditemukan');
-    return;
-  }
+  // Cari elemen-elemen di Tahap 4
+  const pageId = currentRole + 'Page';
+  const page = document.getElementById(pageId);
+  if (!page) return;
 
-  const deliveryToInput = deliverySection.querySelector('.delivery-section');
-  const deliveryDateInput = deliverySection.querySelector('.key-delivery-date');
+  const deliveryDateInput = page.querySelector('.key-delivery-date');
 
-  if (!deliveryToInput || !deliveryDateInput) {
-    console.error('Input elements not found:', {
-      deliveryTo: !!deliveryToInput,
-      deliveryDate: !!deliveryDateInput
-    });
+  if (!deliveryDateInput) {
+    console.error('Input element not found');
     showToast('error', 'Form tidak lengkap!');
     return;
   }
 
-  const deliveryTo = deliveryToInput.value.trim();
   const deliveryDate = deliveryDateInput.value;
-
-  if (!deliveryTo) {
-    showToast('warning', 'Harap isi "Penyerahan Kunci Ke"');
-    deliveryToInput.focus();
-    return;
-  }
 
   showGlobalLoading('Menyimpan data penyerahan kunci...');
 
@@ -5189,7 +5188,6 @@ async function saveKeyDelivery() {
     const result = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
       action: 'saveKeyDelivery',
       kavling: selectedKavling,
-      deliveryTo: deliveryTo,
       deliveryDate: deliveryDate,
       user: currentRole
     });
@@ -5200,13 +5198,9 @@ async function saveKeyDelivery() {
       // Update data lokal
       if (currentKavlingData) {
         if (!currentKavlingData.keyDelivery) currentKavlingData.keyDelivery = {};
-        currentKavlingData.keyDelivery.deliveryTo = deliveryTo;
         currentKavlingData.keyDelivery.deliveryDate = deliveryDate;
       }
 
-      // Clear form jika berhasil
-      deliveryToInput.value = '';
-      deliveryDateInput.value = '';
     } else {
       showToast('error', 'Gagal menyimpan: ' + result.message);
     }
@@ -5224,53 +5218,80 @@ function updateProgress(rolePage) {
   if (!pageElement) return;
 
   const progressSections = pageElement.querySelectorAll('.progress-section[data-tahap]');
-  let totalWeightedProgress = 0;
   
-  // Bobot per tahap
-  const tahapWeights = { 
-    '1': 0.40,  // 40%
-    '2': 0.30,  // 30%
-    '3': 0.20,  // 20%
-    '4': 0.10   // 10%
-  };
+  // Progress values for specific components
+  let tahap1_3_Progress = 0; // Max 94
+  let completionProgress = 0; // Max 5
+  let deliveryDateProgress = 0; // Max 1
+
+  // Tahap 1-3 tasks count
+  let t13_total = 0;
+  let t13_completed = 0;
 
   progressSections.forEach(section => {
     const tahap = section.getAttribute('data-tahap');
     const tasks = section.querySelectorAll('.sub-task, [data-task]');
-    let completedCount = 0;
-    let totalTasks = 0;
+    let sectionCompleted = 0;
+    let sectionTotal = 0;
 
     tasks.forEach(task => {
-      totalTasks++;
-      
-      if (task.type === 'checkbox') {
-        if (task.checked) completedCount++;
-      } else if (task.type === 'hidden' || task.type === 'text') {
-        if (task.value && task.value.trim() !== '') completedCount++;
+      // Abaikan isian Kondisi Property / Keterangan Tambahan
+      if (task.classList.contains('tahap-comments') || task.id === 'utilityPropertyNotes' || task.id === 'propertyNotesManager') {
+        return;
       }
+
+      sectionTotal++;
+      
+      let isCompleted = false;
+      if (task.type === 'checkbox') {
+        if (task.checked) isCompleted = true;
+      } else if (task.type === 'hidden' || task.type === 'text') {
+        if (task.value && task.value.trim() !== '') isCompleted = true;
+      }
+
+      if (isCompleted) {
+        sectionCompleted++;
+        if (tahap === '1' || tahap === '2' || tahap === '3') t13_completed++;
+      }
+      
+      if (tahap === '1' || tahap === '2' || tahap === '3') t13_total++;
     });
 
-    const sectionPercent = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-    
-    // Update tampilan per tahap
-    const subPercentEl = section.querySelector('.sub-percent');
-    if (subPercentEl) {
-      subPercentEl.textContent = Math.round(sectionPercent) + '%';
+    // Specific Tahap 4 components
+    let sectionPercent = 0;
+    if (tahap === '4') {
+      const completionTask = section.querySelector('[data-task^="COMPLETION"]');
+      const deliveryDateTask = section.querySelector('.key-delivery-date');
+
+      if (completionTask && completionTask.checked) {
+        completionProgress = 5;
+      }
+      if (deliveryDateTask && deliveryDateTask.value.trim() !== '') {
+        deliveryDateProgress = 1;
+      }
+      
+      let t4_p1 = (deliveryDateTask && (deliveryDateTask.value || '').trim() !== '') ? 50 : 0;
+      let t4_p2 = (completionTask && completionTask.checked) ? 50 : 0;
+      sectionPercent = t4_p1 + t4_p2;
+    } else {
+      sectionPercent = sectionTotal > 0 ? (sectionCompleted / sectionTotal) * 100 : 0;
     }
+    
+    const subPercentEl = section.querySelector('.sub-percent');
+    if (subPercentEl) subPercentEl.textContent = Math.round(sectionPercent) + '%';
 
     const progressFill = section.querySelector('.progress-fill');
-    if (progressFill) {
-      progressFill.style.width = sectionPercent + '%';
-    }
-
-    // Tambah ke total dengan bobot
-    totalWeightedProgress += sectionPercent * (tahapWeights[tahap] || 0.25);
+    if (progressFill) progressFill.style.width = sectionPercent + '%';
   });
 
-  const roundedProgress = Math.round(totalWeightedProgress);
-  updateTotalProgressDisplay(roundedProgress + '%', rolePage);
+  if (t13_total > 0) {
+    tahap1_3_Progress = (t13_completed / t13_total) * 94;
+  }
+
+  const totalProgress = Math.round(tahap1_3_Progress + completionProgress + deliveryDateProgress);
+  updateTotalProgressDisplay(totalProgress + '%', rolePage);
   
-  return roundedProgress;
+  return totalProgress;
 }
 
 //--------------
