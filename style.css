@@ -791,6 +791,7 @@ h1 {
 .tahap1 { background: #38bdf8; }
 .tahap2 { background: #10b981; }
 .tahap3 { background: #fbbf24; }
+.tahap4 { background: #818cf8; }
 
 .verification-card {
   background: #1e293b;
@@ -1781,12 +1782,35 @@ h1 {
 }
 
 /* ===== FOOTER ===== */
-footer {
+/* ===== FOOTER ===== */
+.main-footer {
   margin-top: 40px;
   text-align: center;
-  color: #94a3b8;
+  color: rgba(148, 163, 184, 0.4); /* Transparan */
   font-size: 0.8rem;
   padding: 20px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  animation: rainbowText 10s infinite;
+  background: linear-gradient(
+    to right, 
+    rgba(148, 163, 184, 0.4) 0%, 
+    rgba(148, 163, 184, 0.4) 40%, 
+    #ff0000 45%, #ff7f00 47%, #ffff00 49%, #00ff00 51%, #0000ff 53%, #4b0082 55%, #9400d3 57%,
+    rgba(148, 163, 184, 0.4) 62%, 
+    rgba(148, 163, 184, 0.4) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes rainbowText {
+  0% { background-position: 100% 0; }
+  20% { background-position: 100% 0; } /* Delay transparan */
+  50% { background-position: 0% 0; }   /* Pelangi lewat */
+  80% { background-position: -100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 /* ===== UTILITY CLASSES ===== */
