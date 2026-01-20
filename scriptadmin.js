@@ -6,7 +6,7 @@
     
     // ========== KONFIGURASI ==========
     // ⚠️ Gunakan URL yang sama dengan script.js
-    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbw9hN6X05NjvOFsOk0jnXBO8x16U7zehISgDWmNpsxCdWMf_BYKt1VcPuxh1biw0RLT1g/execc';
+    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbw7hHrLXSgLIefNQ5WXcvw8wKaHJBMz-TU4NGpjtgB9V8R07VL70H5TJqnTVqlrll7tgg/exec';
     
     // ========== VARIABEL ==========
     let adminData = {
