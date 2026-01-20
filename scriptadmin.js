@@ -6,7 +6,7 @@
     
     // ========== KONFIGURASI ==========
     // ⚠️ Gunakan URL yang sama dengan script.js
-    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbw7hHrLXSgLIefNQ5WXcvw8wKaHJBMz-TU4NGpjtgB9V8R07VL70H5TJqnTVqlrll7tgg/exec';
+    const ADMIN_UTILITAS_URL = 'https://script.google.com/macros/s/AKfycbwxv8arCL1LvcMYMNnGYiIFCB_AzW-VYc9k7DlflMJ8JNexk2cyGZ680GkZWdU17zJqSw/exec';
     
     // ========== VARIABEL ==========
     let adminData = {
@@ -434,7 +434,200 @@
             });
         }
     }
+    // Tambahkan fungsi helper untuk validasi format tanggal
+function validateDateInput(dateStr) {
+    if (!dateStr) return null;
     
+    // Cek format dd/mm/yyyy
+    const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const match = dateStr.match(regex);
+    
+    if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+        
+        // Validasi tanggal
+        const date = new Date(year, month - 1, day);
+        if (date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year) {
+            return dateStr; // Return as is
+        }
+    }
+    
+    return null;
+}
+
+function formatDateForInput(dateStr) {
+    if (!dateStr) return '';
+    
+    try {
+        // Jika sudah format dd/mm/yyyy, return as is
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+            return dateStr;
+        }
+        
+        // Coba parse sebagai Date
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        return dateStr; // Return as string jika tidak bisa diparse
+    } catch (error) {
+        console.error('Date format error:', error);
+        return '';
+    }
+}
+
+// Update saveHandoverKunci dengan validasi tanggal
+async function saveHandoverKunci() {
+    const kavlingName = getSelectedKavling();
+    if (!kavlingName) {
+        showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
+        return;
+    }
+    
+    const hoTab = document.getElementById('tab-ho-user');
+    if (!hoTab) return;
+    
+    const dariInput = hoTab.querySelector('.input-mutasi-ho-dari');
+    const keInput = hoTab.querySelector('.input-mutasi-ho-ke');
+    const tglInput = hoTab.querySelector('.input-mutasi-ho-tgl');
+    
+    const dari = dariInput?.value.trim() || '';
+    const ke = keInput?.value.trim() || '';
+    const tgl = tglInput?.value || '';
+    
+    if (!dari || !ke) {
+        showAdminToast('warning', 'Nama pemberi dan penerima harus diisi!');
+        return;
+    }
+    
+    // Validasi format tanggal jika diisi
+    if (tgl && !validateDateInput(tgl)) {
+        showAdminToast('warning', 'Format tanggal tidak valid! Gunakan format dd/mm/yyyy (contoh: 25/12/2024)');
+        return;
+    }
+    
+    showAdminLoading('Menyimpan data handover...');
+    
+    try {
+        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
+            action: 'saveHandoverKunci',
+            kavling: kavlingName,
+            tglHandover: tgl,
+            dari: dari,
+            ke: ke
+            // Note: parameter 'user' tidak digunakan di backend, bisa dihapus
+        });
+        
+        if (result.success) {
+            showAdminToast('success', 'Data handover berhasil disimpan!');
+            await loadAdminUtilitasData(kavlingName);
+        } else {
+            showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving handover:', error);
+        showAdminToast('error', 'Error: ' + error.message);
+    } finally {
+        hideAdminLoading();
+    }
+}
+
+// Update saveUtilitasDates dengan validasi tanggal
+async function saveUtilitasDates() {
+    const kavlingName = getSelectedKavling();
+    if (!kavlingName) {
+        showAdminToast('warning', 'Pilih kavling terlebih dahulu!');
+        return;
+    }
+    
+    const listrikDate = document.getElementById('listrikInstallDate')?.value || '';
+    const airDate = document.getElementById('airInstallDate')?.value || '';
+    
+    if (!listrikDate && !airDate) {
+        showAdminToast('warning', 'Tidak ada data yang diubah');
+        return;
+    }
+    
+    // Validasi format tanggal
+    if (listrikDate && !validateDateInput(listrikDate)) {
+        showAdminToast('warning', 'Format tanggal listrik tidak valid! Gunakan format dd/mm/yyyy');
+        return;
+    }
+    
+    if (airDate && !validateDateInput(airDate)) {
+        showAdminToast('warning', 'Format tanggal air tidak valid! Gunakan format dd/mm/yyyy');
+        return;
+    }
+    
+    showAdminLoading('Menyimpan data utilitas...');
+    
+    try {
+        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
+            action: 'saveUtilitasData',
+            kavling: kavlingName,
+            listrikDate: listrikDate,
+            airDate: airDate
+        });
+        
+        if (result.success) {
+            showAdminToast('success', 'Data utilitas berhasil disimpan!');
+            await loadAdminUtilitasData(kavlingName);
+        } else {
+            showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving utilitas:', error);
+        showAdminToast('error', 'Error: ' + error.message);
+    } finally {
+        hideAdminLoading();
+    }
+}
+
+// Update fungsi loadAdminUtilitasData
+async function loadAdminUtilitasData(kavlingName) {
+    if (!kavlingName) {
+        showAdminToast('warning', 'Pilih kavling terlebih dahulu');
+        return;
+    }
+    
+    showAdminLoading(`Memuat data admin untuk ${kavlingName}...`);
+    
+    try {
+        const result = await window.getDataFromServer(ADMIN_UTILITAS_URL, {
+            action: 'getHandoverData',
+            kavling: kavlingName
+        });
+        
+        if (result.success) {
+            adminData = {
+                handover: result.handoverData || null,
+                utilitas: result.utilitasData || null,
+                mutasiMasuk: result.mutasiMasuk || '',
+                mutasiKeluar: result.mutasiKeluar || ''
+            };
+            
+            // Update UI dengan format tanggal yang benar
+            updateAdminUI(kavlingName);
+            showAdminToast('success', `Data admin untuk ${kavlingName} dimuat`);
+        } else {
+            showAdminToast('info', 'Belum ada data admin untuk kavling ini');
+            // Reset UI
+            resetAdminUI();
+        }
+    } catch (error) {
+        console.error('Error loading admin data:', error);
+        showAdminToast('error', 'Gagal memuat data admin');
+        resetAdminUI();
+    } finally {
+        hideAdminLoading();
+    }
+}
     function setupAdminTabs() {
         const adminPage = document.getElementById('user4Page');
         if (!adminPage) return;
