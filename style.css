@@ -32,11 +32,21 @@ header {
 h1 {
   font-size: 1.75rem;
   margin-bottom: 10px;
-  background: linear-gradient(to right, #38bdf8, #818cf8);
+  background: linear-gradient(
+    to right, 
+    #ef4444, #f59e0b, #10b981, #3b82f6, #6366f1, #a855f7, #ef4444
+  );
+  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   font-weight: 800;
+  animation: rainbow-animation 8s linear infinite;
+}
+
+@keyframes rainbow-animation {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
 .subtitle {
@@ -785,8 +795,13 @@ h1 {
   background: linear-gradient(to right, #38bdf8, #818cf8);
   height: 100%;
   border-radius: 10px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.total-bar.bar-high { background: linear-gradient(135deg, #10b981, #059669) !important; }
+.total-bar.bar-medium { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; }
+.total-bar.bar-low { background: linear-gradient(135deg, #f59e0b, #d97706) !important; }
+.total-bar.bar-very-low { background: linear-gradient(135deg, #f43f5e, #e11d48) !important; }
 
 .tahap1 { background: #38bdf8; }
 .tahap2 { background: #10b981; }
