@@ -1,4 +1,4 @@
-// versi 0.448
+// versi 0.45
 const USER_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx08smViAL2fT_P0ZCljaM8NGyDPZvhZiWt2EeIy1MYsjoWnSMEyXwoS6jydO-_J8OH/exec';
 const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSFK7tTjxYD-Z-UO35ObXnOMIxNdOmiN_YiV4xTvuifuoLY7v4Gs6HMmPn-yHGyJlbmg/exec';
 
@@ -11,7 +11,7 @@ const defaultDisplayNames = {
   'user2': 'Pelaksana 2',
   'user3': 'Pelaksana 3',
   'user4': 'Pelaksana 4',
-  'manager': 'MANAGEMENT',
+  'manager': 'Supervisor',
   'admin': 'Admin'
 };
 
@@ -610,6 +610,15 @@ function renderSearchList(items, listEl, inputEl, selectEl) {
 
           updateKavlingInfo(currentKavlingData, currentRole + 'Page');
           loadProgressData(data.data);
+          
+          // Fix: Ensure total progress bar and notes are updated for manager
+          if (currentRole === 'manager') {
+            updateTotalProgressDisplay(currentKavlingData.totalAH, currentRole + 'Page');
+            loadPropertyNotesFromData(currentKavlingData);
+            loadRevisionPhotos(selectedKavling);
+          } else if (currentRole === 'user1' || currentRole === 'user2' || currentRole === 'user3') {
+            loadRevisionPhotosForPelaksana(selectedKavling, currentRole);
+          }
 
           // Tampilkan sukses dan auto close
           showStatusModal('success', 'Data Dimuat', `Data ${item} berhasil dimuat!`);
@@ -5426,12 +5435,228 @@ function updateTotalProgressDisplay(progress, pageId) {
   const totalBarEl = pageElement.querySelector('.total-bar');
   if (totalBarEl) {
     totalBarEl.style.width = progress;
+    
+    // Add color logic for manager progress bar and others
+    const percentValue = parseInt(progress) || 0;
+    totalBarEl.className = totalBarEl.className.replace(/\bbar-(high|medium|low|very-low)\b/g, '').trim(); // Reset classes
+    if (percentValue >= 89) totalBarEl.classList.add('bar-high');
+    else if (percentValue >= 60) totalBarEl.classList.add('bar-medium');
+    else if (percentValue >= 10) totalBarEl.classList.add('bar-low');
+    else totalBarEl.classList.add('bar-very-low');
   }
 }
 
 
 
-function savePropertyNotes() {
+// Photo Upload variables for Revision
+let selectedRevisionFile = null;
+let compressedRevisionBase64 = null;
+
+function handleRevisionPhotoSelect(input) {
+  if (input.files && input.files[0]) {
+    selectedRevisionFile = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        // Create canvas for compression
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Max dimensions
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compress and get base64
+        compressedRevisionBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+        
+        document.getElementById('imgPreviewRevision').src = compressedRevisionBase64;
+        document.getElementById('revisionPhotoPreview').style.display = 'block';
+        document.getElementById('btnCancelRevision').style.display = 'flex';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(selectedRevisionFile);
+  }
+}
+
+function cancelRevisionPhoto() {
+  selectedRevisionFile = null;
+  compressedRevisionBase64 = null;
+  document.getElementById('revisionPhotoInput').value = '';
+  document.getElementById('revisionPhotoPreview').style.display = 'none';
+  document.getElementById('btnCancelRevision').style.display = 'none';
+  document.getElementById('imgPreviewRevision').src = '';
+  showToast('info', 'Pilihan foto dibatalkan');
+}
+
+async function loadRevisionPhotosForPelaksana(kavling, role) {
+  const galleryId = `revisionPhotoGallery${role.charAt(0).toUpperCase() + role.slice(1)}`;
+  const gallery = document.getElementById(galleryId);
+  if (!gallery) return;
+  
+  // Ambil ID pencarian (5 karakter pertama)
+  const searchId = kavling.substring(0, 5).toUpperCase();
+  console.log(`Loading revision photos for pelaksana. Search ID: ${searchId}`);
+  
+  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">Memuat foto dari Google Drive...</div>';
+  
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'getRevisionPhotosBySearchId',
+      searchId: searchId,
+      kavling: kavling
+    });
+    
+    gallery.innerHTML = '';
+    
+    if (response.success && response.photos && response.photos.length > 0) {
+      response.photos.forEach(photo => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a;';
+        item.innerHTML = `
+          <img src="${photo.url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${photo.url}', '_blank')">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center;">
+            ${photo.name}
+          </div>
+        `;
+        gallery.appendChild(item);
+      });
+    } else {
+      gallery.innerHTML = `
+        <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+          <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+          Tidak ada foto revisi yang cocok dengan ID "${searchId}"
+        </div>`;
+    }
+  } catch (error) {
+    console.error('Error loading photos for pelaksana:', error);
+    gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px;">Gagal memuat foto dari Google Drive</div>';
+  }
+}
+
+async function savePropertyDataManager() {
+  if (!selectedKavling) {
+    showToast('error', 'Pilih kavling terlebih dahulu');
+    return;
+  }
+
+  const notesEl = document.getElementById('propertyNotesManager');
+  const notes = notesEl ? notesEl.value.trim() : '';
+  
+  showGlobalLoading('Menyimpan data...');
+
+  try {
+    // 1. Simpan Catatan
+    const notesResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'savePropertyNotes',
+      kavling: selectedKavling,
+      notes: notes
+    });
+
+    if (!notesResponse.success) {
+      hideGlobalLoading();
+      showToast('error', 'Gagal menyimpan catatan: ' + notesResponse.message);
+      return;
+    }
+
+    // Update local data
+    if (currentKavlingData && currentKavlingData.kavling === selectedKavling) {
+      currentKavlingData.propertyNotes = notes;
+    }
+
+    // 2. Simpan Foto jika ada
+    if (compressedRevisionBase64) {
+      const base64Data = compressedRevisionBase64.split(',')[1];
+      const photoResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+        action: 'uploadRevisionPhoto',
+        kavling: selectedKavling,
+        image: base64Data,
+        filename: `revision_${selectedKavling}_${Date.now()}.jpg`
+      });
+
+      if (photoResponse.success) {
+        // Reset photo controls
+        document.getElementById('revisionPhotoPreview').style.display = 'none';
+        document.getElementById('revisionPhotoInput').value = '';
+        selectedRevisionFile = null;
+        compressedRevisionBase64 = null;
+        loadRevisionPhotos(selectedKavling);
+      } else {
+        showToast('warning', 'Catatan tersimpan, tapi gagal mengunggah foto');
+      }
+    }
+
+    showStatusModal('success', 'Berhasil', 'Data dan foto berhasil diperbarui');
+    setTimeout(() => {
+      hideGlobalLoading();
+      showToast('success', 'Data berhasil diperbarui');
+    }, 1500);
+
+  } catch (error) {
+    console.error('Error saving data:', error);
+    hideGlobalLoading();
+    showToast('error', 'Terjadi kesalahan: ' + error.message);
+  }
+}
+
+async function uploadRevisionPhoto() {
+  // Deprecated in favor of savePropertyDataManager
+  savePropertyDataManager();
+}
+
+async function loadRevisionPhotos(kavling) {
+  const gallery = document.getElementById('revisionPhotoGallery');
+  if (!gallery) return;
+  
+  // Clear gallery
+  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 10px;">Memuat foto...</div>';
+  
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'getRevisionPhotos',
+      kavling: kavling
+    });
+    
+    gallery.innerHTML = '';
+    
+    if (response.success && response.photos && response.photos.length > 0) {
+      response.photos.forEach(photoUrl => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border-radius: 8px; overflow: hidden; border: 1px solid #334155; position: relative; aspect-ratio: 1;';
+        item.innerHTML = `
+          <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${photoUrl}', '_blank')">
+        `;
+        gallery.appendChild(item);
+      });
+    } else {
+      gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 10px;">Belum ada foto revisi</div>';
+    }
+  } catch (error) {
+    console.error('Error loading photos:', error);
+    gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 10px;">Gagal memuat foto</div>';
+  }
+}
+
+async function savePropertyNotes() {
   // Fungsi untuk save property notes
   console.log('savePropertyNotes called');
   if (!selectedKavling) {
@@ -5446,8 +5671,31 @@ function savePropertyNotes() {
 
   showGlobalLoading('Menyimpan catatan...');
 
-  // Panggil server untuk menyimpan notes
-  // Implementasi Anda di sini
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'savePropertyNotes',
+      kavling: selectedKavling,
+      notes: notes
+    });
+
+    if (response.success) {
+      if (currentKavlingData && currentKavlingData.kavling === selectedKavling) {
+        currentKavlingData.propertyNotes = notes;
+      }
+      showStatusModal('success', 'Berhasil', 'Catatan kondisi property berhasil disimpan');
+      setTimeout(() => {
+        hideGlobalLoading();
+        showToast('success', 'Catatan berhasil disimpan');
+      }, 1500);
+    } else {
+      hideGlobalLoading();
+      showToast('error', response.message || 'Gagal menyimpan catatan');
+    }
+  } catch (error) {
+    console.error('Error saving notes:', error);
+    hideGlobalLoading();
+    showToast('error', 'Terjadi kesalahan: ' + error.message);
+  }
 }
 
 function loadPropertyNotes(kavlingName) {
