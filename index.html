@@ -1,4 +1,4 @@
-<!--  versi 0.448 -->
+<!--  versi 0.45 -->
 <!doctype html>
 <html lang="id">
   <head>
@@ -689,6 +689,9 @@
               <button class="admin-tab-btn" data-tab="user1-tahap4">
                 <i class="fas fa-layer-group"></i> Tahap 4
               </button>
+              <button class="admin-tab-btn" data-tab="user1-revision-photos">
+                <i class="fas fa-images"></i> Revisi dari Supervisor
+              </button>
             </div>
 
             <div class="tab-content pelaksana-tab-content">
@@ -1277,6 +1280,21 @@
                   </button>
                 </div>
               </div>
+
+              <!-- FOTO REVISI - USER 1 -->
+              <div id="tab-user1-revision-photos" class="tab-content-item">
+                <div class="progress-section detailed">
+                  <h3 style="margin-bottom: 15px; color: #38bdf8">
+                    <i class="fas fa-images"></i> Foto Catatan Revisi (Supervisor)
+                  </h3>
+                  <div id="revisionPhotoGalleryUser1" class="revision-gallery-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div class="loading-placeholder" style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+                      <i class="fas fa-cloud-download-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                      Belum ada foto revisi untuk kavling ini
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1373,6 +1391,9 @@
               </button>
               <button class="admin-tab-btn" data-tab="user2-tahap4">
                 <i class="fas fa-layer-group"></i> Tahap 4
+              </button>
+              <button class="admin-tab-btn" data-tab="user2-revision-photos">
+                <i class="fas fa-images"></i> Revisi dari Supervisor
               </button>
             </div>
 
@@ -2010,6 +2031,21 @@
                   </button>
                 </div>
               </div>
+
+              <!-- FOTO REVISI - USER 2 -->
+              <div id="tab-user2-revision-photos" class="tab-content-item">
+                <div class="progress-section detailed">
+                  <h3 style="margin-bottom: 15px; color: #10b981">
+                    <i class="fas fa-images"></i> Foto Catatan Revisi (Supervisor)
+                  </h3>
+                  <div id="revisionPhotoGalleryUser2" class="revision-gallery-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div class="loading-placeholder" style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+                      <i class="fas fa-cloud-download-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                      Belum ada foto revisi untuk kavling ini
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2105,6 +2141,9 @@
               </button>
               <button class="admin-tab-btn" data-tab="user3-tahap4">
                 <i class="fas fa-layer-group"></i> Tahap 4
+              </button>
+              <button class="admin-tab-btn" data-tab="user3-revision-photos">
+                <i class="fas fa-images"></i> Revisi dari Supervisor
               </button>
             </div>
 
@@ -2740,6 +2779,21 @@
                   >
                     <i class="fas fa-save"></i> Simpan Tahap 4
                   </button>
+                </div>
+              </div>
+
+              <!-- FOTO REVISI - USER 3 -->
+              <div id="tab-user3-revision-photos" class="tab-content-item">
+                <div class="progress-section detailed">
+                  <h3 style="margin-bottom: 15px; color: #8b5cf6">
+                    <i class="fas fa-images"></i> Foto Catatan Revisi (Supervisor)
+                  </h3>
+                  <div id="revisionPhotoGalleryUser3" class="revision-gallery-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div class="loading-placeholder" style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+                      <i class="fas fa-cloud-download-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                      Belum ada foto revisi untuk kavling ini
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3389,8 +3443,8 @@
             <button class="btn-add-kavling" type="button">
               <i class="fas fa-plus-circle"></i> Tambah Kavling
             </button>
-            <button id="btnDeleteKavling" type="button">
-              <i class="fas fa-trash-alt"></i> Hapus Kavling
+            <button class="btn-edit-kavling" type="button">
+              <i class="fas fa-edit"></i> Edit Kavling
             </button>
             <button class="sync-btn combined-btn" type="button">
               <i class="fas fa-sync-alt"></i> Sinkronkan
@@ -3530,13 +3584,36 @@
                         "
                         placeholder="Masukkan catatan kondisi property di sini..."
                       ></textarea>
-                      <button
-                        class="btn-save-section"
-                        type="button"
-                        style="margin-top: 10px"
-                      >
-                        <i class="fas fa-save"></i> Simpan Catatan
-                      </button>
+                      <div class="photo-upload-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <h3 style="margin-bottom: 15px; color: #38bdf8">Foto Catatan Revisi</h3>
+                        <div class="upload-controls" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                          <input type="file" id="revisionPhotoInput" accept="image/*" style="display: none;" onchange="handleRevisionPhotoSelect(this)">
+                          <button type="button" class="combined-btn" style="background: #334155; flex: 1;" onclick="document.getElementById('revisionPhotoInput').click()">
+                            <i class="fas fa-camera"></i> Pilih Foto
+                          </button>
+                          <button type="button" id="btnCancelRevision" class="combined-btn" style="background: #f43f5e; flex: 1; display: none;" onclick="cancelRevisionPhoto()">
+                            <i class="fas fa-times"></i> Batal
+                          </button>
+                        </div>
+                        
+                        <div id="revisionPhotoPreview" style="width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; border: 2px solid #334155;">
+                          <img id="imgPreviewRevision" src="" style="width: 100%; height: auto; display: block;">
+                        </div>
+
+                        <button
+                          id="btnSavePropertyData"
+                          class="btn-save-section"
+                          type="button"
+                          style="margin-top: 10px; background: linear-gradient(135deg, #0ea5e9, #2563eb);"
+                          onclick="savePropertyDataManager()"
+                        >
+                          <i class="fas fa-save"></i> Simpan Catatan & Foto
+                        </button>
+
+                        <div id="revisionPhotoGallery" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px;">
+                          <!-- Uploaded photos will appear here -->
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
