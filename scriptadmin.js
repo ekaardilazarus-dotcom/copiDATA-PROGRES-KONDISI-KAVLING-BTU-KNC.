@@ -1,4 +1,4 @@
-// scriptadmin.js - VERSI 0.51
+// scriptadmin.js - VERSI 0.52
 (function() {
     'use strict';
     
@@ -124,6 +124,12 @@
 }
     
     function resetAdminUI() {
+        // Sembunyikan tab container saat reset
+        const tabsContainer = document.getElementById('adminUtilitasTabsContainer');
+        if (tabsContainer) {
+            tabsContainer.style.display = 'none';
+        }
+
         const inputs = document.querySelectorAll('#user4Page input');
         inputs.forEach(input => {
             if (input) {
@@ -186,6 +192,13 @@
                 
                 // Update UI
                 updateAdminUI(kavlingName);
+                
+                // Tampilkan tab container setelah data berhasil dimuat
+                const tabsContainer = document.getElementById('adminUtilitasTabsContainer');
+                if (tabsContainer) {
+                    tabsContainer.style.display = 'block';
+                }
+                
                 showAdminToast('success', `Data admin untuk ${kavlingName} dimuat`);
             } else {
                 showAdminToast('info', 'Belum ada data admin untuk kavling ini');
@@ -403,6 +416,10 @@ function updateMutasiTabs() {
             if (result.success) {
                 showAdminToast('success', 'Data handover berhasil disimpan!');
                 await loadAdminUtilitasData(kavlingName);
+                
+                // Otomatis tampilkan riwayat mutasi
+                const historyContainer = document.getElementById('mutasiHistoryContainer');
+                if (historyContainer) historyContainer.style.display = 'block';
             } else {
                 showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
             }
@@ -466,6 +483,10 @@ function updateMutasiTabs() {
                 // Refresh data setelah 500ms
                 setTimeout(() => {
                     loadAdminUtilitasData(kavlingName);
+                    
+                    // Otomatis tampilkan riwayat mutasi
+                    const historyContainer = document.getElementById('mutasiHistoryContainer');
+                    if (historyContainer) historyContainer.style.display = 'block';
                 }, 500);
 
             } else {
@@ -545,12 +566,16 @@ function updateMutasiTabs() {
                 showAdminToast('success', `Mutasi ${jenisMutasi.toLowerCase()} berhasil disimpan!`);
                 
                 // Clear form inputs
-                document.getElementById(dariInputId).value = '';
-                document.getElementById(keInputId).value = '';
-                document.getElementById(tglInputId).value = '';
+                if (document.getElementById(dariInputId)) document.getElementById(dariInputId).value = '';
+                if (document.getElementById(keInputId)) document.getElementById(keInputId).value = '';
+                if (document.getElementById(tglInputId)) document.getElementById(tglInputId).value = '';
                 
                 // Refresh data
                 await loadAdminUtilitasData(kavlingName);
+                
+                // Otomatis tampilkan riwayat mutasi
+                const historyContainer = document.getElementById('mutasiHistoryContainer');
+                if (historyContainer) historyContainer.style.display = 'block';
             } else {
                 showAdminToast('error', 'Gagal menyimpan: ' + (result.message || 'Unknown error'));
             }
