@@ -1,6 +1,6 @@
 // versi 0.45
 const USER_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx08smViAL2fT_P0ZCljaM8NGyDPZvhZiWt2EeIy1MYsjoWnSMEyXwoS6jydO-_J8OH/exec';
-const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSFK7tTjxYD-Z-UO35ObXnOMIxNdOmiN_YiV4xTvuifuoLY7v4Gs6HMmPn-yHGyJlbmg/exec';
+const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx74QNbn6OSU9HwVNJrsWf5DeCSMxptgrMkRjaVvi7X0TjNCZZIB-uk1UraLu1I69IZGA/exec';
 
 let currentRole = null;
 let selectedKavling = null;
@@ -5653,6 +5653,160 @@ async function loadRevisionPhotos(kavling) {
   } catch (error) {
     console.error('Error loading photos:', error);
     gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 10px;">Gagal memuat foto</div>';
+  }
+}
+
+// Fungsi untuk upload foto revisi (dipanggil oleh supervisor)
+async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
+  try {
+    console.log(`Uploading revision photo for ${kavlingName}`);
+    
+    const response = await fetch(PROGRESS_APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        action: 'uploadRevisionPhoto',
+        kavlingName: kavlingName,
+        image: base64Image,
+        uploadedBy: 'supervisor'
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      showToast('success', 'Foto revisi berhasil diupload ke Google Drive');
+      console.log('Upload success:', result);
+      
+      // Refresh gallery setelah upload
+      if (currentRole === 'manager') {
+        loadRevisionPhotos(kavlingName);
+      }
+      
+      return result;
+    } else {
+      showToast('error', 'Gagal upload foto: ' + result.message);
+      console.error('Upload failed:', result);
+      return null;
+    }
+    
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    showToast('error', 'Error: ' + error.message);
+    return null;
+  }
+}
+
+// Fungsi untuk save data manager dengan foto revisi
+async function savePropertyDataManager() {
+  const kavlingName = selectedKavling;
+  const notes = document.getElementById('propertyNotesInput').value;
+  
+  if (!kavlingName) {
+    showToast('warning', 'Pilih kavling terlebih dahulu');
+    return;
+  }
+  
+  // Jika ada foto revisi yang dipilih
+  if (compressedRevisionBase64) {
+    // Upload foto terlebih dahulu
+    showToast('info', 'Mengupload foto revisi...');
+    
+    const uploadResult = await uploadRevisionPhotoToDrive(kavlingName, compressedRevisionBase64);
+    
+    if (!uploadResult) {
+      showToast('error', 'Gagal upload foto revisi, proses dibatalkan');
+      return;
+    }
+  }
+  
+  // Simpan catatan property
+  const saveResult = await savePropertyNotes(kavlingName, notes);
+  
+  if (saveResult.success) {
+    showToast('success', 'Data berhasil disimpan');
+    // Reset form foto
+    cancelRevisionPhoto();
+  } else {
+    showToast('error', 'Gagal menyimpan catatan: ' + saveResult.message);
+  }
+}
+
+// Update fungsi loadRevisionPhotosForPelaksana dengan endpoint baru
+async function loadRevisionPhotosForPelaksana(kavling, role) {
+  const galleryId = `revisionPhotoGallery${role.charAt(0).toUpperCase() + role.slice(1)}`;
+  const gallery = document.getElementById(galleryId);
+  if (!gallery) return;
+  
+  // Ambil ID pencarian (5-6 karakter pertama)
+  let searchId = '';
+  if (kavling.length >= 5) {
+    // Ambil 5-6 karakter pertama tergantung format
+    searchId = kavling.substring(0, 5).toUpperCase();
+    
+    // Jika kavling seperti M1_100, ambil 6 karakter
+    if (kavling.length >= 6 && (kavling.includes('_') || /M\d+_\d+/.test(kavling))) {
+      searchId = kavling.substring(0, 6).toUpperCase();
+    }
+  } else {
+    searchId = kavling.toUpperCase();
+  }
+  
+  console.log(`Loading revision photos for pelaksana. Search ID: ${searchId}, Kavling: ${kavling}`);
+  
+  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">Memuat foto dari Google Drive...</div>';
+  
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'getRevisionPhotosBySearchId',
+      searchId: searchId,
+      kavling: kavling
+    });
+    
+    gallery.innerHTML = '';
+    
+    if (response.success && response.photos && response.photos.length > 0) {
+      response.photos.forEach((photo, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a;';
+        item.innerHTML = `
+          <img src="${photo.url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" 
+               onclick="window.open('${photo.viewUrl}', '_blank')"
+               loading="lazy"
+               onerror="this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" fill=\"%231e293b\"/><text x=\"50\" y=\"50\" font-family=\"Arial\" font-size=\"10\" fill=\"%2394a3b8\" text-anchor=\"middle\" dy=\".3em\">Foto</text></svg>'">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center;">
+            ${photo.name}
+          </div>
+          <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 10px;">
+            ${index + 1}
+          </div>
+        `;
+        gallery.appendChild(item);
+      });
+      
+      // Tambahkan info jumlah foto
+      const infoDiv = document.createElement('div');
+      infoDiv.style.cssText = 'grid-column: span 2; text-align: center; color: #38bdf8; padding: 10px; font-size: 0.9rem;';
+      infoDiv.innerHTML = `<i class="fas fa-images"></i> Ditemukan ${response.count} foto revisi untuk "${kavling}"`;
+      gallery.appendChild(infoDiv);
+      
+    } else {
+      gallery.innerHTML = `
+        <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+          <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+          <div style="margin-bottom: 10px;">Tidak ada foto revisi untuk "${kavling}"</div>
+          <div style="font-size: 0.8rem; color: #64748b;">Search ID yang digunakan: "${searchId}"</div>
+        </div>`;
+    }
+  } catch (error) {
+    console.error('Error loading photos for pelaksana:', error);
+    gallery.innerHTML = `
+      <div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px; border: 2px dashed #dc2626; border-radius: 12px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+        Gagal memuat foto dari Google Drive
+      </div>`;
   }
 }
 
