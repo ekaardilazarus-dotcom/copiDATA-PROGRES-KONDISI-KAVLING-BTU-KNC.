@@ -5446,8 +5446,6 @@ function updateTotalProgressDisplay(progress, pageId) {
   }
 }
 
-
-
 // Photo Upload variables for Revision
 let selectedRevisionFile = null;
 let compressedRevisionBase64 = null;
@@ -5491,6 +5489,7 @@ function handleRevisionPhotoSelect(input) {
         document.getElementById('imgPreviewRevision').src = compressedRevisionBase64;
         document.getElementById('revisionPhotoPreview').style.display = 'block';
         document.getElementById('btnCancelRevision').style.display = 'flex';
+console.log(`Image compressed: ${width}x${height}, Size: ${Math.round(compressedRevisionBase64.length * 0.75 / 1024)}KB`);
       };
       img.src = e.target.result;
     };
@@ -5656,11 +5655,21 @@ async function loadRevisionPhotos(kavling) {
   }
 }
 
-// Fungsi untuk upload foto revisi (dipanggil oleh supervisor)
+// Fungsi untuk upload foto revisi ke Google Drive (dipanggil oleh supervisor)
 async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
   try {
-    console.log(`Uploading revision photo for ${kavlingName}`);
+    console.log(`Frontend: Uploading photo for ${kavlingName}`);
     
+    // Validasi
+    if (!kavlingName || !base64Image) {
+      showToast('warning', 'Nama kavling dan foto diperlukan');
+      return null;
+    }
+    
+    // Tampilkan loading
+    showToast('info', 'Mengupload foto ke Google Drive...', 5000);
+    
+    // Kirim ke Apps Script (backend) menggunakan POST
     const response = await fetch(PROGRESS_APPS_SCRIPT_URL, {
       method: 'POST',
       headers: {
@@ -5677,7 +5686,7 @@ async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
     const result = await response.json();
     
     if (result.success) {
-      showToast('success', 'Foto revisi berhasil diupload ke Google Drive');
+      showToast('success', '✅ Foto revisi berhasil diupload ke Google Drive');
       console.log('Upload success:', result);
       
       // Refresh gallery setelah upload
@@ -5687,14 +5696,14 @@ async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
       
       return result;
     } else {
-      showToast('error', 'Gagal upload foto: ' + result.message);
+      showToast('error', '❌ Gagal upload foto: ' + result.message);
       console.error('Upload failed:', result);
       return null;
     }
     
   } catch (error) {
     console.error('Error uploading photo:', error);
-    showToast('error', 'Error: ' + error.message);
+    showToast('error', '❌ Error: ' + error.message);
     return null;
   }
 }
@@ -5702,7 +5711,7 @@ async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
 // Fungsi untuk save data manager dengan foto revisi
 async function savePropertyDataManager() {
   const kavlingName = selectedKavling;
-  const notes = document.getElementById('propertyNotesInput').value;
+  const notes = document.getElementById('propertyNotesInput') ? document.getElementById('propertyNotesInput').value : '';
   
   if (!kavlingName) {
     showToast('warning', 'Pilih kavling terlebih dahulu');
@@ -5712,7 +5721,7 @@ async function savePropertyDataManager() {
   // Jika ada foto revisi yang dipilih
   if (compressedRevisionBase64) {
     // Upload foto terlebih dahulu
-    showToast('info', 'Mengupload foto revisi...');
+    showToast('info', 'Mengupload foto revisi...', 5000);
     
     const uploadResult = await uploadRevisionPhotoToDrive(kavlingName, compressedRevisionBase64);
     
@@ -5720,45 +5729,77 @@ async function savePropertyDataManager() {
       showToast('error', 'Gagal upload foto revisi, proses dibatalkan');
       return;
     }
+    
+    // Reset foto setelah upload sukses
+    cancelRevisionPhoto();
   }
   
-  // Simpan catatan property
-  const saveResult = await savePropertyNotes(kavlingName, notes);
-  
-  if (saveResult.success) {
-    showToast('success', 'Data berhasil disimpan');
-    // Reset form foto
-    cancelRevisionPhoto();
+  // Simpan catatan property (jika ada)
+  if (notes.trim() !== '') {
+    const saveResult = await savePropertyNotes(kavlingName, notes);
+    
+    if (saveResult && saveResult.success) {
+      showToast('success', '✅ Catatan berhasil disimpan');
+    } else if (saveResult && !saveResult.success) {
+      showToast('error', '⚠️ Foto berhasil diupload, tapi gagal menyimpan catatan: ' + saveResult.message);
+    }
+  } else if (compressedRevisionBase64) {
+    // Jika hanya upload foto tanpa catatan
+    showToast('success', '✅ Foto berhasil diupload');
   } else {
-    showToast('error', 'Gagal menyimpan catatan: ' + saveResult.message);
+    showToast('info', 'Tidak ada data yang perlu disimpan');
   }
 }
 
-// Update fungsi loadRevisionPhotosForPelaksana dengan endpoint baru
+// Update fungsi loadRevisionPhotosForPelaksana dengan search ID yang lebih akurat
 async function loadRevisionPhotosForPelaksana(kavling, role) {
   const galleryId = `revisionPhotoGallery${role.charAt(0).toUpperCase() + role.slice(1)}`;
   const gallery = document.getElementById(galleryId);
   if (!gallery) return;
   
-  // Ambil ID pencarian (5-6 karakter pertama)
+  // Tentukan search ID berdasarkan pola nama kavling
   let searchId = '';
-  if (kavling.length >= 5) {
-    // Ambil 5-6 karakter pertama tergantung format
-    searchId = kavling.substring(0, 5).toUpperCase();
+  
+  // Pattern matching untuk format kavling
+  // Contoh: M1_10, M1_100, A2_25, B3_50, dll
+  const pattern = /^([A-Z]\d+_)(\d+)$/i;
+  const match = kavling.match(pattern);
+  
+  if (match) {
+    // Jika format seperti M1_100
+    const prefix = match[1].toUpperCase(); // Contoh: "M1_"
+    const numberPart = match[2]; // Contoh: "100"
     
-    // Jika kavling seperti M1_100, ambil 6 karakter
-    if (kavling.length >= 6 && (kavling.includes('_') || /M\d+_\d+/.test(kavling))) {
+    if (numberPart.length <= 2) {
+      // Jika angka 1-99, ambil 5 karakter
+      searchId = kavling.substring(0, 5).toUpperCase();
+    } else {
+      // Jika angka 100+, ambil 6 karakter
       searchId = kavling.substring(0, 6).toUpperCase();
     }
   } else {
-    searchId = kavling.toUpperCase();
+    // Jika tidak match pattern, gunakan 5-6 karakter pertama
+    searchId = kavling.substring(0, Math.min(6, kavling.length)).toUpperCase();
   }
   
-  console.log(`Loading revision photos for pelaksana. Search ID: ${searchId}, Kavling: ${kavling}`);
+  console.log(`Loading revision photos for pelaksana. 
+    Kavling: ${kavling}, 
+    Search ID: ${searchId}, 
+    Role: ${role}`);
   
-  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">Memuat foto dari Google Drive...</div>';
+  // Tampilkan loading state
+  gallery.innerHTML = `
+    <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">
+      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+      <div>Memuat foto revisi...</div>
+      <div style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
+        Mencari foto dengan kode: "${searchId}"
+      </div>
+    </div>
+  `;
   
   try {
+    // Gunakan fungsi getDataFromServer yang sudah ada
     const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
       action: 'getRevisionPhotosBySearchId',
       searchId: searchId,
@@ -5768,36 +5809,61 @@ async function loadRevisionPhotosForPelaksana(kavling, role) {
     gallery.innerHTML = '';
     
     if (response.success && response.photos && response.photos.length > 0) {
-      response.photos.forEach((photo, index) => {
-        const item = document.createElement('div');
-        item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a;';
-        item.innerHTML = `
-          <img src="${photo.url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" 
-               onclick="window.open('${photo.viewUrl}', '_blank')"
-               loading="lazy"
-               onerror="this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" fill=\"%231e293b\"/><text x=\"50\" y=\"50\" font-family=\"Arial\" font-size=\"10\" fill=\"%2394a3b8\" text-anchor=\"middle\" dy=\".3em\">Foto</text></svg>'">
-          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center;">
-            ${photo.name}
-          </div>
-          <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; font-size: 0.65rem; padding: 2px 5px; border-radius: 10px;">
-            ${index + 1}
-          </div>
-        `;
-        gallery.appendChild(item);
-      });
+      // Kelompokkan foto berdasarkan apakah exact match atau tidak
+      const exactMatches = response.photos.filter(p => p.matchesSearchId);
+      const otherMatches = response.photos.filter(p => !p.matchesSearchId);
+      
+      // Tampilkan foto exact matches dulu
+      if (exactMatches.length > 0) {
+        exactMatches.forEach((photo, index) => {
+          const item = createPhotoGalleryItem(photo, index + 1, true);
+          gallery.appendChild(item);
+        });
+      }
+      
+      // Tampilkan foto other matches (jika ada)
+      if (otherMatches.length > 0) {
+        // Tambahkan separator jika ada kedua jenis
+        if (exactMatches.length > 0) {
+          const separator = document.createElement('div');
+          separator.style.cssText = 'grid-column: span 2; text-align: center; padding: 10px; color: #64748b; font-size: 0.8rem;';
+          separator.innerHTML = '<hr style="border: 1px solid #334155; margin: 10px 0;">Foto terkait lainnya:';
+          gallery.appendChild(separator);
+        }
+        
+        otherMatches.forEach((photo, index) => {
+          const item = createPhotoGalleryItem(photo, exactMatches.length + index + 1, false);
+          gallery.appendChild(item);
+        });
+      }
       
       // Tambahkan info jumlah foto
       const infoDiv = document.createElement('div');
       infoDiv.style.cssText = 'grid-column: span 2; text-align: center; color: #38bdf8; padding: 10px; font-size: 0.9rem;';
-      infoDiv.innerHTML = `<i class="fas fa-images"></i> Ditemukan ${response.count} foto revisi untuk "${kavling}"`;
+      
+      let infoText = '';
+      if (exactMatches.length > 0) {
+        infoText = `<i class="fas fa-check-circle"></i> Ditemukan ${response.count} foto untuk "${kavling}"`;
+        if (otherMatches.length > 0) {
+          infoText += ` (${exactMatches.length} exact match, ${otherMatches.length} terkait)`;
+        }
+      } else {
+        infoText = `<i class="fas fa-info-circle"></i> Ditemukan ${response.count} foto terkait untuk "${kavling}"`;
+      }
+      
+      infoDiv.innerHTML = infoText;
       gallery.appendChild(infoDiv);
       
     } else {
+      // Tidak ada foto yang ditemukan
       gallery.innerHTML = `
         <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
-          <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-          <div style="margin-bottom: 10px;">Tidak ada foto revisi untuk "${kavling}"</div>
-          <div style="font-size: 0.8rem; color: #64748b;">Search ID yang digunakan: "${searchId}"</div>
+          <i class="fas fa-images" style="font-size: 2rem; margin-bottom: 10px; display: block; color: #64748b;"></i>
+          <div style="margin-bottom: 10px; font-size: 0.9rem;">Tidak ada foto revisi untuk "${kavling}"</div>
+          <div style="font-size: 0.8rem; color: #64748b;">
+            <div>Search ID yang digunakan: "${searchId}"</div>
+            <div style="margin-top: 5px;">Format pencarian: 5-6 karakter pertama dari nama kavling</div>
+          </div>
         </div>`;
     }
   } catch (error) {
@@ -5805,7 +5871,146 @@ async function loadRevisionPhotosForPelaksana(kavling, role) {
     gallery.innerHTML = `
       <div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px; border: 2px dashed #dc2626; border-radius: 12px;">
         <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-        Gagal memuat foto dari Google Drive
+        <div style="margin-bottom: 10px;">Gagal memuat foto dari Google Drive</div>
+        <div style="font-size: 0.8rem; color: #fca5a5;">Error: ${error.message || 'Tidak dapat terhubung ke server'}</div>
+      </div>`;
+  }
+}
+
+// Helper function untuk membuat gallery item
+function createPhotoGalleryItem(photo, index, isExactMatch) {
+  const item = document.createElement('div');
+  item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a; transition: transform 0.2s, border-color 0.2s;';
+  item.classList.add('photo-gallery-item');
+  
+  item.innerHTML = `
+    <img src="${photo.url}" 
+         style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" 
+         onclick="window.open('${photo.viewUrl || photo.url}', '_blank')"
+         loading="lazy"
+         onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"400\" height=\"300\" fill=\"%231e293b\"/><text x=\"200\" y=\"150\" font-family=\"Arial\" font-size=\"16\" fill=\"%2394a3b8\" text-anchor=\"middle\" dy=\".3em\">Gambar tidak dapat dimuat</text></svg>';"
+         alt="Foto revisi ${photo.name}">
+    
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center; backdrop-filter: blur(4px);">
+      ${photo.name}
+    </div>
+    
+    <div style="position: absolute; top: 5px; right: 5px; background: ${isExactMatch ? 'rgba(34, 197, 94, 0.9)' : 'rgba(234, 179, 8, 0.9)'}; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; font-weight: bold;">
+      ${index}
+    </div>
+    
+    ${isExactMatch ? 
+      `<div style="position: absolute; top: 5px; left: 5px; background: rgba(34, 197, 94, 0.9); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 8px;">
+        Exact
+      </div>` : ''
+    }
+    
+    <div style="position: absolute; bottom: 30px; right: 5px; background: rgba(0,0,0,0.6); color: #cbd5e1; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px;">
+      ${photo.size || 'N/A'}
+    </div>
+  `;
+  
+  // Tambahkan hover effect
+  item.addEventListener('mouseenter', () => {
+    item.style.transform = 'scale(1.02)';
+    item.style.borderColor = isExactMatch ? '#22c55e' : '#eab308';
+  });
+  
+  item.addEventListener('mouseleave', () => {
+    item.style.transform = 'scale(1)';
+    item.style.borderColor = '#334155';
+  });
+  
+  return item;
+}
+
+// Fungsi load revision photos untuk manager
+async function loadRevisionPhotos(kavling) {
+  const gallery = document.getElementById('revisionPhotoGallery');
+  if (!gallery) return;
+  
+  // Clear gallery dengan loading state
+  gallery.innerHTML = `
+    <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">
+      <div class="spinner" style="width: 30px; height: 30px; border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+      Memuat foto revisi...
+    </div>
+  `;
+  
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'getRevisionPhotos',
+      kavling: kavling
+    });
+    
+    gallery.innerHTML = '';
+    
+    if (response.success && response.photos && response.photos.length > 0) {
+      // Sort by date (newest first)
+      const sortedPhotos = response.photos.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      sortedPhotos.forEach((photo, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border-radius: 8px; overflow: hidden; border: 1px solid #334155; position: relative; aspect-ratio: 1; transition: transform 0.2s;';
+        item.classList.add('photo-item');
+        
+        item.innerHTML = `
+          <img src="${photo.url}" 
+               style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" 
+               onclick="window.open('${photo.viewUrl || photo.url}', '_blank')"
+               loading="lazy"
+               onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"400\" height=\"300\" fill=\"%231e293b\"/><text x=\"200\" y=\"150\" font-family=\"Arial\" font-size=\"16\" fill=\"%2394a3b8\" text-anchor=\"middle\" dy=\".3em\">Gambar tidak dapat dimuat</text></svg>';"
+               alt="Foto revisi ${photo.name}">
+          
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; font-size: 0.7rem; padding: 3px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${photo.name}
+          </div>
+          
+          <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; font-size: 0.6rem; padding: 1px 4px; border-radius: 8px;">
+            ${index + 1}
+          </div>
+        `;
+        
+        // Hover effect
+        item.addEventListener('mouseenter', () => {
+          item.style.transform = 'scale(1.03)';
+          item.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        });
+        
+        item.addEventListener('mouseleave', () => {
+          item.style.transform = 'scale(1)';
+          item.style.boxShadow = 'none';
+        });
+        
+        gallery.appendChild(item);
+      });
+      
+      // Tambahkan info jumlah foto
+      const infoDiv = document.createElement('div');
+      infoDiv.style.cssText = 'grid-column: span 2; text-align: center; color: #38bdf8; padding: 10px; font-size: 0.85rem;';
+      infoDiv.innerHTML = `<i class="fas fa-images"></i> ${response.count} foto revisi untuk "${kavling}"`;
+      gallery.appendChild(infoDiv);
+      
+    } else {
+      gallery.innerHTML = `
+        <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
+          <i class="fas fa-camera" style="font-size: 2rem; margin-bottom: 10px; display: block; color: #64748b;"></i>
+          <div>Belum ada foto revisi untuk kavling ini</div>
+          <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">
+            <div>Gunakan form di atas untuk upload foto revisi</div>
+            <div style="margin-top: 5px;">Format nama file: <code>[nama_kavling]_[YYYYMMDD_HHMMSS].jpg</code></div>
+          </div>
+        </div>`;
+    }
+  } catch (error) {
+    console.error('Error loading photos:', error);
+    gallery.innerHTML = `
+      <div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px; border: 2px dashed #dc2626; border-radius: 12px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+        Gagal memuat foto
+        <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 5px;">
+          ${error.message || 'Tidak dapat terhubung ke server'}
+        </div>
       </div>`;
   }
 }
