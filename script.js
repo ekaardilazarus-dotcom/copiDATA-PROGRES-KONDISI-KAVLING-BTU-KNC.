@@ -1,6 +1,6 @@
-// versi 0.45
+// versi 0.55
 const USER_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx08smViAL2fT_P0ZCljaM8NGyDPZvhZiWt2EeIy1MYsjoWnSMEyXwoS6jydO-_J8OH/exec';
-const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx74QNbn6OSU9HwVNJrsWf5DeCSMxptgrMkRjaVvi7X0TjNCZZIB-uk1UraLu1I69IZGA/exec';
+const PROGRESS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPMzfpARNvlvZyXONWErh-p-CFo7GTHo_iv_5wOADCJRVaZImU9N0tKc_QPp2dF_tAow/exec';
 
 let currentRole = null;
 let selectedKavling = null;
@@ -850,7 +850,7 @@ function getDataFromServer(url, params = {}) {
       if (scriptEl) scriptEl.remove();
     };
 
-    let requestUrl = url + '?';
+    let requestUrl = url + (url.includes('?') ? '&' : '?');
     const urlParams = new URLSearchParams();
 
     Object.keys(params).forEach(key => {
@@ -2276,27 +2276,27 @@ async function saveTahap1() {
   const checkboxes = tahap1Section.querySelectorAll('.sub-task');
 
   // PERBAIKAN: Cari input berdasarkan role yang sedang aktif
-  let wasteSystemInput, tableKitchenInput;
+  let currentWasteSystemInput, currentTableKitchenInput;
 
   if (currentRole === 'user1') {
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser1');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser1');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser1');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser1');
   } else if (currentRole === 'user2') {
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser2');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser2');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser2');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser2');
   } else if (currentRole === 'user3') {
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser3');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser3');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser3');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser3');
   } else if (currentRole === 'user4') {
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser4');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser4');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser4');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser4');
   } else if (currentRole === 'user5') {
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser5');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser5');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInputUser5');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInputUser5');
   } else {
     // Fallback untuk role lain
-    wasteSystemInput = tahap1Section.querySelector('#wasteSystemInput');
-    tableKitchenInput = tahap1Section.querySelector('#tableKitchenInput');
+    currentWasteSystemInput = tahap1Section.querySelector('#wasteSystemInput');
+    currentTableKitchenInput = tahap1Section.querySelector('#tableKitchenInput');
   }
 
   const saveButton = tahap1Section.querySelector('.btn-save-section');
@@ -2332,36 +2332,33 @@ async function saveTahap1() {
     }
   });
 
-  // PERBAIKAN: Handle Sistem Pembuangan dengan nilai yang benar
-  if (wasteSystemInput) {
-    const wasteValue = wasteSystemInput.value;
-    console.log('Sistem Pembuangan value:', wasteValue);
+  // Handle Cor Meja Dapur
+  const currentCorMejaDapurInputEl = tahap1Section.querySelector(`#tableKitchenInput${currentRole === 'user1' ? 'User1' : currentRole === 'user2' ? 'User2' : currentRole === 'user3' ? 'User3' : ''}`);
+  if (currentCorMejaDapurInputEl) {
+    const tableValue = currentCorMejaDapurInputEl.value;
+    console.log('Cor Meja Dapur value from input:', tableValue);
+    if (tableValue === 'include' || tableValue === 'Dengan Cor Meja Dapur') {
+      tahapData['COR MEJA DAPUR'] = 'Dengan Cor Meja Dapur';
+    } else if (tableValue === 'exclude' || tableValue === 'Tanpa Cor Meja Dapur') {
+      tahapData['COR MEJA DAPUR'] = 'Tanpa Cor Meja Dapur';
+    } else {
+      tahapData['COR MEJA DAPUR'] = tableValue;
+    }
+  }
 
+  // Handle Sistem Pembuangan
+  const currentWasteSystemInputEl = tahap1Section.querySelector(`#wasteSystemInput${currentRole === 'user1' ? 'User1' : currentRole === 'user2' ? 'User2' : currentRole === 'user3' ? 'User3' : ''}`);
+  if (currentWasteSystemInputEl) {
+    const wasteValue = currentWasteSystemInputEl.value;
+    console.log('Sistem Pembuangan value from input:', wasteValue);
     if (wasteValue === 'septictank') {
       tahapData['SISTEM PEMBUANGAN'] = 'Septictank';
     } else if (wasteValue === 'biotank') {
       tahapData['SISTEM PEMBUANGAN'] = 'Biotank';
     } else if (wasteValue === 'ipal') {
       tahapData['SISTEM PEMBUANGAN'] = 'Ipal';
-    } else if (wasteValue === 'Septictank' || wasteValue === 'Biotank' || wasteValue === 'Ipal') {
-      // Jika nilai sudah dalam format yang benar
+    } else {
       tahapData['SISTEM PEMBUANGAN'] = wasteValue;
-    } else {
-      tahapData['SISTEM PEMBUANGAN'] = ''; // Kosong jika tidak ada pilihan
-    }
-  }
-
-  // PERBAIKAN: Handle Cor Meja Dapur dengan nilai yang benar
-  if (tableKitchenInput) {
-    const tableValue = tableKitchenInput.value;
-    console.log('Cor Meja Dapur value:', tableValue);
-
-    if (tableValue === 'include' || tableValue === 'Dengan Cor Meja Dapur') {
-      tahapData['COR MEJA DAPUR'] = 'Dengan Cor Meja Dapur';
-    } else if (tableValue === 'exclude' || tableValue === 'Tanpa Cor Meja Dapur') {
-      tahapData['COR MEJA DAPUR'] = 'Tanpa Cor Meja Dapur';
-    } else {
-      tahapData['COR MEJA DAPUR'] = ''; // Kosong jika tidak ada pilihan
     }
   }
 
@@ -2839,25 +2836,31 @@ function displaySummaryReport(summaryData) {
 
   const completedCount = summaryData.categories?.completed?.count || 
                          summaryData.completedKavlings?.length || 
-                         summaryData.items?.filter(k => (parseInt(k.totalProgress) || 0) >= 89).length || 0;
+                         summaryData.items?.filter(k => {
+                           const progress = parseProgressValue(k.totalProgress || k.aj);
+                           return progress >= 89;
+                         }).length || 0;
 
   const almostCount = summaryData.categories?.almostCompleted?.count || 
                       summaryData.almostCompletedKavlings?.length || 
                       summaryData.items?.filter(k => {
-                        const p = parseInt(k.totalProgress) || 0;
-                        return p >= 60 && p < 89;
+                        const progress = parseProgressValue(k.totalProgress || k.aj);
+                        return progress >= 60 && progress < 89;
                       }).length || 0;
 
   const progressCount = summaryData.categories?.inProgress?.count || 
                         summaryData.inProgressKavlings?.length || 
                         summaryData.items?.filter(k => {
-                          const p = parseInt(k.totalProgress) || 0;
-                          return p >= 10 && p < 60;
+                          const progress = parseProgressValue(k.totalProgress || k.aj);
+                          return progress >= 10 && progress < 60;
                         }).length || 0;
 
   const lowCount = summaryData.categories?.lowProgress?.count || 
                    summaryData.lowProgressKavlings?.length || 
-                   summaryData.items?.filter(k => (parseInt(k.totalProgress) || 0) < 10).length || 0;
+                   summaryData.items?.filter(k => {
+                     const progress = parseProgressValue(k.totalProgress || k.aj);
+                     return progress < 10;
+                   }).length || 0;
 
   let html = `
     <div class="summary-header">
@@ -2921,6 +2924,15 @@ function displaySummaryReport(summaryData) {
       </div>
     </div>
 
+    <div class="summary-actions">
+      <button onclick="downloadFullReport()" class="btn-save-section" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <i class="fas fa-file-excel"></i> Download Full Report
+      </button>
+      <button onclick="refreshSummary()" class="sync-btn" style="margin-left: 10px;">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+    </div>
+
     <div id="filteredKavlingSection">
       <div class="summary-section">
         <p class="no-data">Pilih kategori di atas untuk melihat detail data</p>
@@ -2929,6 +2941,28 @@ function displaySummaryReport(summaryData) {
   `;
 
   container.innerHTML = html;
+
+  // Tambahkan styles untuk table
+  addTableStyles();
+}
+
+// Helper function untuk parse progress value
+function parseProgressValue(progressStr) {
+  if (!progressStr) return 0;
+
+  if (typeof progressStr === 'number') {
+    return progressStr <= 1 ? progressStr * 100 : progressStr;
+  }
+
+  if (typeof progressStr === 'string') {
+    const match = progressStr.match(/(\d+(\.\d+)?)%?/);
+    if (match) {
+      const num = parseFloat(match[1]);
+      return num <= 1 ? num * 100 : num;
+    }
+  }
+
+  return 0;
 }
 
 function renderKavlingSection(title, kavlings) {
@@ -2943,36 +2977,484 @@ function renderKavlingSection(title, kavlings) {
     `;
   }
 
+  // Header dengan nama tugas yang sebenarnya
+  const headers = [
+    { key: 'kavling', label: 'BLOK', width: '100px' },
+    { key: 'total_progress', label: 'TOTAL', width: '80px' },
+    { key: 'lt', label: 'LT', width: '60px' },
+    { key: 'lb', label: 'LB', width: '60px' },
+    { key: 'type', label: 'Type', width: '80px' },
+
+    // Tahap 1
+    { key: 'land_clearing', label: 'LAND CLEARING', width: '120px' },
+    { key: 'pondasi', label: 'PONDASI', width: '90px' },
+    { key: 'sloof', label: 'SLOOF', width: '80px' },
+    { key: 'pas_ddg_sd2_canopy', label: 'PAS.DDG S/D2 CANOPY', width: '140px' },
+    { key: 'pas_ddg_sd_ring_blk', label: 'PAS.DDG S/D RING BLK', width: '140px' },
+    { key: 'conduit_inbow_doos', label: 'CONDUIT+INBOW DOOS', width: '140px' },
+    { key: 'pipa_air_kotor', label: 'PIPA AIR KOTOR', width: '120px' },
+    { key: 'pipa_air_bersih', label: 'PIPA AIR BERSIH', width: '120px' },
+    { key: 'sistem_pembuangan', label: 'Sistem Pembuangan', width: '130px' },
+    { key: 'plester', label: 'PLESTER', width: '80px' },
+    { key: 'acian_benangan', label: 'ACIAN & BENANGAN', width: '130px' },
+    { key: 'cor_meja_dapur', label: 'COR MEJA DAPUR', width: '120px' },
+
+    // Tahap 2
+    { key: 'rangka_atap', label: 'RANGKA ATAP', width: '110px' },
+    { key: 'genteng', label: 'GENTENG', width: '80px' },
+    { key: 'plafond', label: 'PLAFOND', width: '80px' },
+    { key: 'keramik_dinding_toilet_dapur', label: 'KERAMIK DINDING TOILET & DAPUR', width: '180px' },
+    { key: 'instalasi_listrik', label: 'INSTS LISTRIK', width: '110px' },
+    { key: 'keramik_lantai', label: 'KERAMIK LANTAI', width: '110px' },
+
+    // Tahap 3
+    { key: 'kusen_pintu_jendela', label: 'KUSEN PINTU & JENDELA', width: '160px' },
+    { key: 'daun_pintu_jendela', label: 'DAUN PINTU & JENDELA', width: '150px' },
+    { key: 'cat_dasar_lapis_awal', label: 'CAT DASAR + LAPIS AWAL', width: '150px' },
+    { key: 'fitting_lampu', label: 'FITTING LAMPU', width: '100px' },
+    { key: 'fixture_saniter', label: 'FIXTURE & SANITER', width: '130px' },
+    { key: 'cat_finish_interior', label: 'CAT FINISH INTERIOR', width: '140px' },
+    { key: 'cat_finish_exterior', label: 'CAT FINISH EXTERIOR', width: '140px' },
+    { key: 'bak_kontrol_batas_carport', label: 'BAK KONTROL & BATAS CARPORT', width: '180px' },
+    { key: 'paving_halaman', label: 'PAVING HALAMAN', width: '120px' },
+    { key: 'meteran_listrik', label: 'Meteran Listrik', width: '110px' },
+    { key: 'meteran_air', label: 'Meteran Air', width: '100px' },
+    { key: 'general_cleaning', label: 'GENERAL CLEANING', width: '120px' },
+
+    // Tahap 4
+    { key: 'completion_penyelesaian_akhir', label: 'COMPLETION / Penyelesaian akhir', width: '180px' },
+    { key: 'keterangan', label: 'Keterangan', width: '150px' },
+    { key: 'penyerahan_kunci_dari_pelaksana_ke', label: 'Penyerahan Kunci dari Pelaksana Ke', width: '200px' },
+    { key: 'tanggal_penyerahan_kunci_dari_pelaksana', label: 'Tanggal Penyerahan Kunci dari Pelaksana', width: '180px' }
+  ];
+
   let html = `
     <div class="summary-section">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h4><i class="fas fa-list"></i> ${title}</h4>
-        <button onclick="downloadKavlingToExcel('${title}')" class="btn-save-section" style="width: auto; margin-top: 0; padding: 8px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">
+        <h4><i class="fas fa-list"></i> ${title} (${kavlings.length} kavling)</h4>
+        <button onclick="downloadSummaryToExcel('${title}')" class="btn-save-section" style="width: auto; margin-top: 0; padding: 8px 15px; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669);">
           <i class="fas fa-file-excel"></i> Download Excel
         </button>
       </div>
-      <div class="kavling-list">
+
+      <div class="kavling-table-container">
+        <table class="kavling-summary-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">No</th>
+  `;
+
+  // Generate header columns
+  headers.forEach(header => {
+    html += `<th style="width: ${header.width};">${header.label}</th>`;
+  });
+
+  html += `
+            </tr>
+          </thead>
+          <tbody>
   `;
 
   kavlings.forEach((kavling, index) => {
-    const progressVal = parseInt(kavling.totalProgress) || 0;
-    const progressClass = progressVal >= 89 ? 'progress-high' : (progressVal >= 60 ? 'progress-medium' : 'progress-low');
+    // Parse progress untuk styling
+    const totalProgress = parseProgressValue(kavling.total_progress || kavling.total || kavling.aj);
+    const progressClass = totalProgress >= 89 ? 'progress-high' : 
+                         (totalProgress >= 60 ? 'progress-medium' : 
+                         (totalProgress >= 10 ? 'progress-low' : 'progress-very-low'));
 
     html += `
-      <div class="kavling-item">
-        <div class="kavling-rank">${index + 1}</div>
-        <div class="kavling-info">
-          <div class="kavling-name">${kavling.kavling}</div>
-          <div class="kavling-details">LT: ${kavling.lt || '-'} | LB: ${kavling.lb || '-'}</div>
-        </div>
-        <div class="kavling-progress ${progressClass}">${kavling.totalProgress}</div>
-      </div>
+      <tr>
+        <td class="text-center">${index + 1}</td>
     `;
+
+    // Generate data cells berdasarkan header
+    headers.forEach(header => {
+      let rawValue = null;
+      
+      // 1. Coba mapping manual berdasarkan label (ini yang paling akurat dari Spreadsheet)
+      const label = header.label.toUpperCase();
+      if (kavling[label] !== undefined && kavling[label] !== null) {
+        rawValue = kavling[label];
+      }
+      
+      // 2. Jika tidak ada, coba mapping berdasarkan key
+      if (rawValue === null || rawValue === undefined) {
+        // Cek label asli tanpa Uppercase jika label di headers mengandung karakter khusus
+        if (kavling[header.label] !== undefined && kavling[header.label] !== null) {
+            rawValue = kavling[header.label];
+        } else {
+            const possibleKeys = [
+              header.key,
+              header.key.replace(/_/g, ' '),
+              header.key.toUpperCase(),
+              header.label // Coba label apa adanya
+            ];
+            
+            for (const k of possibleKeys) {
+              if (kavling[k] !== undefined && kavling[k] !== null) {
+                rawValue = kavling[k];
+                break;
+              }
+            }
+        }
+      }
+
+      // Formatting khusus untuk kolom tertentu
+      let cellContent = '';
+      if (header.key === 'kavling') {
+        cellContent = `<td class="kavling-name">${rawValue || '-'}</td>`;
+      } else if (header.key === 'total_progress') {
+        const val = parseProgressValue(rawValue || 0);
+        cellContent = `<td class="text-center ${progressClass}"><strong>${val}%</strong></td>`;
+      } else {
+        // TAMPILKAN APA ADANYA (Sesuai request: Munculkan saja apapun yang tertulis)
+        // Cek apakah nilainya 100% atau mengandung %
+        const strVal = String(rawValue || '');
+        if (strVal.includes('%') || strVal.toLowerCase() === 'v') {
+          cellContent = `<td class="text-center">${rawValue}</td>`;
+        } else if (rawValue === true || rawValue === 'TRUE') {
+          cellContent = `<td class="text-center status-check"><i class="fas fa-check-circle" style="color: #10b981;"></i></td>`;
+        } else if (rawValue === false || rawValue === 'FALSE') {
+          cellContent = `<td class="text-center status-uncheck"><i class="far fa-circle" style="color: #e2e8f0;"></i></td>`;
+        } else {
+          // Tampilkan teks asli (misal: 100%, v, V, atau keterangan lainnya)
+          cellContent = `<td class="text-center">${rawValue !== null && rawValue !== undefined ? rawValue : '-'}</td>`;
+        }
+      }
+      
+      html += cellContent;
+    });
+
+    html += `</tr>`;
   });
 
-  html += `</div></div>`;
+  html += `
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
   return html;
 }
+
+// Global variable to store current filtered kavlings for download
+window.currentFilteredKavlings = [];
+
+function filterKavlingByProgress(filter) {
+  const summaryData = window.lastSummaryData;
+  if (!summaryData) return;
+
+  let kavlings = [];
+  let title = '';
+
+  const allItems = summaryData.items || summaryData.allKavlings || [];
+
+  switch(filter) {
+    case 'all':
+      kavlings = allItems;
+      title = 'Semua Data Kavling';
+      break;
+    case 'completed':
+      kavlings = allItems.filter(k => {
+        const p = parseProgressValue(k.total_progress || k.total || k.aj);
+        return p >= 89;
+      });
+      title = 'Kavling Selesai (89-100%)';
+      break;
+    case 'almostCompleted':
+      kavlings = allItems.filter(k => {
+        const p = parseProgressValue(k.total_progress || k.total || k.aj);
+        return p >= 60 && p < 89;
+      });
+      title = 'Kavling Hampir Selesai (60-88%)';
+      break;
+    case 'inProgress':
+      kavlings = allItems.filter(k => {
+        const p = parseProgressValue(k.total_progress || k.total || k.aj);
+        return p >= 10 && p < 60;
+      });
+      title = 'Kavling Sedang Berjalan (10-59%)';
+      break;
+    case 'lowProgress':
+      kavlings = allItems.filter(k => {
+        const p = parseProgressValue(k.total_progress || k.total || k.aj);
+        return p < 10;
+      });
+      title = 'Kavling Progress Rendah (0-9%)';
+      break;
+  }
+
+  window.currentFilteredKavlings = kavlings;
+  const filteredSection = document.getElementById('filteredKavlingSection');
+  if (filteredSection) {
+    filteredSection.innerHTML = renderKavlingSection(title, kavlings);
+  }
+}
+
+// Update download function to use stored data
+async function downloadSummaryToExcel(title) {
+  const kavlings = window.currentFilteredKavlings;
+  if (!kavlings || kavlings.length === 0) {
+    showToast('warning', 'Tidak ada data untuk didownload');
+    return;
+  }
+
+  // Header dengan label yang benar
+  const headers = [
+    'BLOK', 'TOTAL', 'LT', 'LB', 'Type', 
+    'LAND CLEARING', 'PONDASI', 'SLOOF', 'PAS.DDG S/D2 CANOPY', 'PAS.DDG S/D RING BLK', 
+    'CONDUIT+INBOW DOOS', 'PIPA AIR KOTOR', 'PIPA AIR BERSIH', 'Sistem Pembuangan', 
+    'PLESTER', 'ACIAN & BENANGAN', 'COR MEJA DAPUR', 
+    'RANGKA ATAP', 'GENTENG', 'PLAFOND', 'KERAMIK DINDING TOILET & DAPUR', 
+    'INSTS LISTRIK', 'KERAMIK LANTAI', 
+    'KUSEN PINTU & JENDELA', 'DAUN PINTU & JENDELA', 'CAT DASAR + LAPIS AWAL', 
+    'FITTING LAMPU', 'FIXTURE & SANITER', 'CAT FINISH INTERIOR', 'CAT FINISH EXTERIOR', 
+    'BAK KONTROL & BATAS CARPORT', 'PAVING HALAMAN', 'Meteran Listrik', 'Meteran Air', 
+    'GENERAL CLEANING', 'COMPLETION / Penyelesaian akhir', 'Keterangan', 
+    'Penyerahan Kunci dari Pelaksana Ke', 'Tanggal Penyerahan Kunci dari Pelaksana'
+  ];
+
+  let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+  csvContent += headers.join(';') + "\n";
+
+  kavlings.forEach((kavling, index) => {
+    const rowData = [
+      // Data dasar
+      kavling.kavling || '',
+      kavling.total_progress || kavling.total || kavling.aj || '0%',
+      kavling.lt || '',
+      kavling.lb || '',
+      kavling.type || '',
+
+      // Tahap 1 - mapping key yang sesuai
+      formatExcelValue(kavling['LAND CLEARING'] || kavling.land_clearing),
+      formatExcelValue(kavling.PONDASI || kavling.pondasi),
+      formatExcelValue(kavling.SLOOF || kavling.sloof),
+      formatExcelValue(kavling['PAS.DDG S/D2 CANOPY'] || kavling.pas_ddg_sd2_canopy),
+      formatExcelValue(kavling['PAS.DDG S/D RING BLK'] || kavling.pas_ddg_sd_ring_blk),
+      formatExcelValue(kavling['CONDUIT+INBOW DOOS'] || kavling.conduit_inbow_doos),
+      formatExcelValue(kavling['PIPA AIR KOTOR'] || kavling.pipa_air_kotor),
+      formatExcelValue(kavling['PIPA AIR BERSIH'] || kavling.pipa_air_bersih),
+      formatExcelValue(kavling['SISTEM PEMBUANGAN'] || kavling.sistem_pembuangan || kavling.sistemPembuangan),
+      formatExcelValue(kavling.PLESTER || kavling.plester),
+      formatExcelValue(kavling['ACIAN & BENANGAN'] || kavling.acian_benangan),
+      formatExcelValue(kavling['COR MEJA DAPUR'] || kavling.cor_meja_dapur || kavling.corMejaDapur),
+
+      // Tahap 2
+      formatExcelValue(kavling['RANGKA ATAP'] || kavling.rangka_atap),
+      formatExcelValue(kavling.GENTENG || kavling.genteng),
+      formatExcelValue(kavling.PLAFOND || kavling.plafond),
+      formatExcelValue(kavling['KERAMIK DINDING TOILET & DAPUR'] || kavling.keramik_dinding_toilet_dapur || kavling.keramikDinding),
+      formatExcelValue(kavling['INSTALASI LISTRIK'] || kavling.instalasi_listrik),
+      formatExcelValue(kavling['KERAMIK LANTAI'] || kavling.keramik_lantai),
+
+      // Tahap 3
+      formatExcelValue(kavling['KUSEN PINTU & JENDELA'] || kavling.kusen_pintu_jendela),
+      formatExcelValue(kavling['DAUN PINTU & JENDELA'] || kavling.daun_pintu_jendela),
+      formatExcelValue(kavling['CAT DASAR + LAPIS AWAL'] || kavling.cat_dasar_lapis_awal),
+      formatExcelValue(kavling['FITTING LAMPU'] || kavling.fitting_lampu),
+      formatExcelValue(kavling['FIXTURE & SANITER'] || kavling.fixture_saniter),
+      formatExcelValue(kavling['CAT FINISH INTERIOR'] || kavling.cat_finish_interior),
+      formatExcelValue(kavling['CAT FINISH EXTERIOR'] || kavling.cat_finish_exterior),
+      formatExcelValue(kavling['BAK KONTROL & BATAS CARPORT'] || kavling.bak_kontrol_batas_carport),
+      formatExcelValue(kavling['PAVING HALAMAN'] || kavling.paving_halaman),
+      formatExcelValue(kavling['METERAN LISTRIK'] || kavling.meteran_listrik),
+      formatExcelValue(kavling['METERAN AIR'] || kavling.meteran_air),
+      formatExcelValue(kavling['GENERAL CLEANING'] || kavling.general_cleaning),
+
+      // Tahap 4
+      formatExcelValue(kavling['COMPLETION / Penyelesaian akhir'] || kavling.completion_penyelesaian_akhir),
+      kavling.total_progress || kavling.total || kavling.aj || '0%',
+      kavling.keterangan || '',
+      kavling['PENYERAHAN KUNCI'] || kavling.penyerahan_kunci_dari_pelaksana_ke || '',
+      formatExcelDate(kavling['TANGGAL_PENYERAHAN_KUNCI'] || kavling.tanggal_penyerahan_kunci_dari_pelaksana || kavling.keyDeliveryDate)
+    ];
+
+    csvContent += rowData.join(';') + "\n";
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  const dateStr = new Date().toISOString().split('T')[0];
+  link.setAttribute("download", `${title.replace(/\s+/g, '_')}_${dateStr}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  showToast('success', 'Laporan berhasil didownload');
+}
+
+function formatExcelValue(value) {
+  if (value === true || value === 'TRUE' || value === '✓' || value === 1) {
+    return '✓';
+  }
+  if (value === false || value === 'FALSE' || value === '' || value === 0) {
+    return '';
+  }
+  return value || '';
+}
+
+function formatExcelDate(value) {
+  if (!value) return '';
+
+  try {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      return Utilities.formatDate(date, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    }
+  } catch (e) {
+    // Jika parsing gagal, return as is
+  }
+
+  return value;
+}
+
+function formatCellValue(value) {
+  if (value === null || value === undefined || value === '') return '-';
+
+  // Jika boolean (checkbox)
+  if (value === true || value === 'TRUE') return '✓';
+  if (value === false || value === 'FALSE') return '';
+
+  // Untuk nilai persentase atau teks lainnya, tampilkan apa adanya (raw)
+  return value;
+}
+
+async function compressImageToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set max dimensions
+        const maxWidth = 800;
+        const maxHeight = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to base64 with compression
+        const base64 = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(base64.split(',')[1]); // Return only the base64 data part
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function addTableStyles() {
+  if (!document.getElementById('summary-table-styles')) {
+    const style = document.createElement('style');
+    style.id = 'summary-table-styles';
+    style.textContent = `
+      .summary-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 20px 0;
+        gap: 10px;
+      }
+
+      .kavling-table-container {
+        overflow-x: auto;
+        max-height: 500px;
+        margin-top: 20px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+      }
+
+      .kavling-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .kavling-summary-table th {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: #e2e8f0;
+        padding: 10px 8px;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid #475569;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .kavling-summary-table td {
+        padding: 8px;
+        border: 1px solid #334155;
+        text-align: center;
+        background: #0f172a;
+        color: #cbd5e1;
+      }
+
+      .kavling-summary-table tr:nth-child(even) td {
+        background: #1e293b;
+      }
+
+      .kavling-summary-table tr:hover td {
+        background: #2d3748;
+      }
+
+      .kavling-name {
+        font-weight: 600;
+        color: #38bdf8;
+        min-width: 100px;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background: inherit;
+      }
+
+      .kavling-summary-table th:first-child,
+      .kavling-summary-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background: inherit;
+      }
+
+      .progress-high { color: #10b981; font-weight: bold; }
+      .progress-medium { color: #f59e0b; font-weight: bold; }
+      .progress-low { color: #f97316; font-weight: bold; }
+      .progress-very-low { color: #f43f5e; font-weight: bold; }
+
+      .text-center { text-align: center; }
+
+      .stat-card.active-filter {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border: 2px solid #38bdf8;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 
 function filterKavlingByProgress(category) {
   const summaryData = window.lastSummaryData;
@@ -2990,7 +3472,6 @@ function filterKavlingByProgress(category) {
   let title = '';
   let kavlings = [];
 
-  // PERBAIKAN: Ambil items dari data yang benar (beberapa format didukung)
   switch(category) {
     case 'completed':
       title = 'Data Kavling Selesai (89-100%)';
@@ -2998,7 +3479,10 @@ function filterKavlingByProgress(category) {
                  summaryData.categories?.completed?.kavlings || 
                  summaryData.completedKavlings || 
                  summaryData.topCompleted ||
-                 (summaryData.items || summaryData.allKavlings)?.filter(k => (parseInt(k.totalProgress) || 0) >= 89) || [];
+                 (summaryData.items || []).filter(k => {
+                   const progress = parseProgressValue(k.totalProgress || k.aj);
+                   return progress >= 89;
+                 }) || [];
       break;
     case 'almostCompleted':
       title = 'Data Kavling Hampir Selesai (60-88%)';
@@ -3006,9 +3490,9 @@ function filterKavlingByProgress(category) {
                  summaryData.categories?.almostCompleted?.kavlings || 
                  summaryData.almostCompletedKavlings || 
                  summaryData.topAlmost ||
-                 (summaryData.items || summaryData.allKavlings)?.filter(k => {
-                   const p = parseInt(k.totalProgress) || 0;
-                   return p >= 60 && p < 89;
+                 (summaryData.items || []).filter(k => {
+                   const progress = parseProgressValue(k.totalProgress || k.aj);
+                   return progress >= 60 && progress < 89;
                  }) || [];
       break;
     case 'inProgress':
@@ -3016,9 +3500,9 @@ function filterKavlingByProgress(category) {
       kavlings = summaryData.categories?.inProgress?.items || 
                  summaryData.categories?.inProgress?.kavlings || 
                  summaryData.inProgressKavlings || 
-                 (summaryData.items || summaryData.allKavlings)?.filter(k => {
-                   const p = parseInt(k.totalProgress) || 0;
-                   return p >= 10 && p < 60;
+                 (summaryData.items || []).filter(k => {
+                   const progress = parseProgressValue(k.totalProgress || k.aj);
+                   return progress >= 10 && progress < 60;
                  }) || [];
       break;
     case 'lowProgress':
@@ -3027,12 +3511,14 @@ function filterKavlingByProgress(category) {
                  summaryData.categories?.lowProgress?.kavlings || 
                  summaryData.lowProgressKavlings || 
                  summaryData.needAttention ||
-                 (summaryData.items || summaryData.allKavlings)?.filter(k => (parseInt(k.totalProgress) || 0) < 10) || [];
+                 (summaryData.items || []).filter(k => {
+                   const progress = parseProgressValue(k.totalProgress || k.aj);
+                   return progress < 10;
+                 }) || [];
       break;
     case 'all':
       title = 'Seluruh Data Kavling';
-      // Prioritaskan daftar lengkap
-      kavlings = summaryData.allKavlings || summaryData.items || summaryData.kavlings || [];
+      kavlings = summaryData.allKavlings || summaryData.items || [];
       break;
     default:
       title = 'Detail Data Kavling';
@@ -3293,6 +3779,8 @@ async function saveMutasi(type) {
     hideGlobalLoading();
   }
 }
+
+
 
 function downloadKavlingToExcel(title) {
   // Simple CSV generation as a proxy for Excel since we are in client-side JS without heavy libraries
@@ -4379,7 +4867,15 @@ function initApp() {
     console.log('Setting up key delivery button...');
     setupKeyDeliveryButton();
 
-   // Setup tombol view mutation history
+    // Setup photo upload listeners
+    console.log('Setting up photo upload listeners...');
+    setupPhotoUploadListeners();
+
+    // ===== TAMBAHAN: Setup khusus untuk tombol save di tab notes manager =====
+    console.log('Setting up manager save button for notes tab...');
+    setupManagerNotesSaveButton();
+
+    // Setup tombol view mutation history
     setupViewMutationButton();
 
     // Debug untuk memastikan tombol ditemukan
@@ -4397,8 +4893,6 @@ function initApp() {
     // Test satu tombol untuk memastikan bekerja
     if (todayBtns.length > 0) {
       console.log('✅ Ready to test "Hari Ini" button');
-
-      // Simpan referensi untuk testing
       window.debugTodayBtn = todayBtns[0];
     }
 
@@ -4412,6 +4906,110 @@ function initApp() {
   }
 
   console.log('=== APP INITIALIZED ===');
+}
+
+// ===== FUNGSI BARU: Setup khusus tombol save di tab notes manager =====
+function setupManagerNotesSaveButton() {
+  console.log('🔧 Setting up manager notes save button...');
+
+  // Cari tombol save di tab notes manager
+  const managerSaveBtn = document.querySelector('#tab-notes .btn-save-section');
+
+  if (managerSaveBtn) {
+    console.log('✅ Found manager notes save button');
+
+    // Hapus event listener lama jika ada (clone untuk reset)
+    const newBtn = managerSaveBtn.cloneNode(true);
+    managerSaveBtn.parentNode.replaceChild(newBtn, managerSaveBtn);
+
+    // Tambah event listener baru
+    newBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      console.log('🎯 Manager notes save button clicked');
+
+      // Pastikan fungsi savePropertyDataManager ada
+      if (typeof savePropertyDataManager === 'function') {
+        console.log('📝 Calling savePropertyDataManager()...');
+        await savePropertyDataManager();
+      } else {
+        console.error('❌ savePropertyDataManager function not found!');
+        showToast('error', 'Fungsi penyimpanan tidak tersedia');
+
+        // Fallback ke fungsi lama jika ada
+        if (typeof savePropertyNotes === 'function') {
+          console.log('⚠️ Falling back to savePropertyNotes()');
+          await savePropertyNotes();
+        }
+      }
+    });
+
+    console.log(`✅ Manager notes save button setup complete (id: ${newBtn.id || 'no-id'})`);
+  } else {
+    console.log('ℹ️ Manager notes save button not found yet (may be lazy-loaded)');
+
+    // Setup observer untuk menangani jika button muncul nanti
+    setupManagerNotesObserver();
+  }
+}
+
+// ===== FUNGSI TAMBAHAN: Observer untuk tombol yang lazy-loaded =====
+function setupManagerNotesObserver() {
+  // Observer untuk mendeteksi ketika tab notes manager dibuka
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        const managerSaveBtn = document.querySelector('#tab-notes .btn-save-section');
+        if (managerSaveBtn) {
+          console.log('🎯 Manager notes save button appeared via mutation');
+          setupManagerNotesSaveButton(); // Setup sekarang
+          observer.disconnect(); // Stop observing
+        }
+      }
+    });
+  });
+
+  // Mulai observe pada container tab notes
+  const notesTab = document.getElementById('tab-notes');
+  if (notesTab) {
+    observer.observe(notesTab, { childList: true, subtree: true });
+    console.log('👀 Observer started for manager notes tab');
+  }
+}
+
+// ===== FUNGSI PERBAIKAN: setupPhotoUploadListeners =====
+function setupPhotoUploadListeners() {
+  console.log('Setting up photo upload listeners...');
+
+  // Photo input change event
+  const photoInput = document.getElementById('revisionPhotoInput');
+  if (photoInput) {
+    // Clone to remove old listeners
+    const newPhotoInput = photoInput.cloneNode(true);
+    photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
+
+    newPhotoInput.addEventListener('change', function(e) {
+      console.log('📸 Photo input changed');
+      if (this.files && this.files[0]) {
+        handleRevisionPhotoSelect(this);
+      }
+    });
+  }
+
+  // Cancel photo button
+  const cancelBtn = document.getElementById('btnCancelRevision');
+  if (cancelBtn) {
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    newCancelBtn.addEventListener('click', cancelRevisionPhoto);
+  }
+
+  // NOTICE: Tombol save di tab notes manager sekarang di-handle oleh setupManagerNotesSaveButton()
+  // di atas, jadi kita tidak perlu setup ulang di sini
+
+  console.log('✅ Photo upload listeners setup complete');
 }
 
 function setupGlobalEventDelegation() {
@@ -4933,6 +5531,125 @@ function setupDeleteKavling() {
   }
 }
 
+
+// ===== FUNGSI UNTUK VALIDASI BASE64 =====
+function isValidBase64(str) {
+  try {
+    // Check if string contains only valid base64 characters
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (!base64Regex.test(str)) return false;
+
+    // Try to decode
+    const decoded = Utilities.base64Decode(str);
+    return decoded !== null;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ===== FUNGSI UNTUK MENDAPATKAN FOTO REVISI BERDASARKAN SEARCH ID =====
+function getRevisionPhotosBySearchIdFromSheet(searchId, kavlingName = '') {
+  try {
+    console.log('=== GET REVISION PHOTOS BY SEARCH ID FROM SHEET ===');
+    console.log('Search ID:', searchId);
+    console.log('Kavling:', kavlingName);
+
+    if (!searchId) {
+      return { 
+        success: false, 
+        message: 'Parameter searchId diperlukan' 
+      };
+    }
+
+    const sheet = initializeFotoRevisiSheet();
+    const lastRow = sheet.getLastRow();
+
+    if (lastRow < 2) {
+      return {
+        success: true,
+        searchId: searchId,
+        kavling: kavlingName,
+        photos: [],
+        count: 0
+      };
+    }
+
+    const data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
+    const photos = [];
+    const searchIdUpper = searchId.toUpperCase();
+    const kavlingUpper = kavlingName.toUpperCase();
+
+    data.forEach((row, index) => {
+      const rowSearchId = String(row[7] || '').trim().toUpperCase();
+      const rowKavling = String(row[1] || '').trim().toUpperCase();
+      let matches = false;
+
+      // Check search ID match
+      if (rowSearchId === searchIdUpper) {
+        matches = true;
+      }
+      // If no search ID match but kavling name provided, check kavling name
+      else if (kavlingName && rowKavling === kavlingUpper) {
+        matches = true;
+      }
+      // Check if search ID is part of kavling name
+      else if (rowKavling.includes(searchIdUpper)) {
+        matches = true;
+      }
+
+      if (matches) {
+        const timestamp = row[0];
+        const fileName = row[2];
+        const base64Data = row[3];
+        const uploadedBy = row[4];
+        const fileSizeKB = row[5];
+
+        // Create data URL for frontend
+        const dataUrl = `data:image/jpeg;base64,${base64Data}`;
+
+        photos.push({
+          id: index + 2,
+          name: fileName,
+          url: dataUrl,
+          base64: base64Data.substring(0, 100) + '...',
+          timestamp: timestamp,
+          uploadedBy: uploadedBy,
+          size: fileSizeKB + ' KB',
+          searchId: rowSearchId,
+          kavling: rowKavling,
+          rowNumber: index + 2,
+          matchesSearchId: rowSearchId === searchIdUpper
+        });
+      }
+    });
+
+    // Sort by timestamp (newest first)
+    photos.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    console.log(`Found ${photos.length} photos matching search ID: ${searchId}`);
+
+    return {
+      success: true,
+      searchId: searchId,
+      kavling: kavlingName,
+      photos: photos,
+      count: photos.length,
+      exactMatchCount: photos.filter(p => p.matchesSearchId).length
+    };
+
+  } catch (error) {
+    console.error('❌ Error getting revision photos by search ID from sheet:', error);
+    logError('getRevisionPhotosBySearchIdFromSheet', error.toString(), { 
+      searchId: searchId,
+      kavling: kavlingName
+    });
+    return { 
+      success: false, 
+      message: 'Error: ' + error.toString() 
+    };
+  }
+}
+
 function setupTodayButtons() {
   console.log('🔧 Setting up "Hari Ini" buttons...');
 
@@ -5262,7 +5979,8 @@ function toggleTilesButton(button, option) {
 function toggleTableButton(button, option) {
   const taskItem = button.closest('.task-item') || button.closest('.task-item-standalone');
   const buttons = taskItem.querySelectorAll('.table-btn');
-  const hiddenInput = taskItem.querySelector('#tableKitchenInput');
+  const idSuffix = (currentRole === 'user1' || currentRole === 'user2' || currentRole === 'user3' || currentRole === 'user4' || currentRole === 'user5') ? `User${currentRole.slice(-1)}` : '';
+  const hiddenInput = taskItem.querySelector(`#tableKitchenInput${idSuffix}`) || taskItem.querySelector('#tableKitchenInput');
 
   const wasActive = button.classList.contains('active');
 
@@ -5273,20 +5991,18 @@ function toggleTableButton(button, option) {
   });
 
   if (wasActive) {
-    hiddenInput.value = '';
+    if (hiddenInput) hiddenInput.value = '';
   } else {
     // Aktifkan tombol yang diklik
     button.classList.add('active');
     button.setAttribute('data-active', 'true');
-    hiddenInput.value = option;
+    if (hiddenInput) hiddenInput.value = option;
   }
 
   const rolePage = currentRole + 'Page';
   updateProgress(rolePage);
 }
 
-// ========== TAMBAHKAN FUNGSI YANG HILANG ==========
-// Fungsi-fungsi ini disebut di kode Anda tetapi tidak didefinisikan:
 // ========== FUNGSI SAVE KEY DELIVERY ==========
 async function saveKeyDelivery() {
   if (!selectedKavling) {
@@ -5507,362 +6223,129 @@ function cancelRevisionPhoto() {
   showToast('info', 'Pilihan foto dibatalkan');
 }
 
+// PERBAIKI fungsi loadRevisionPhotosForPelaksana:
 async function loadRevisionPhotosForPelaksana(kavling, role) {
   const galleryId = `revisionPhotoGallery${role.charAt(0).toUpperCase() + role.slice(1)}`;
   const gallery = document.getElementById(galleryId);
-  if (!gallery) return;
-  
-  // Ambil ID pencarian (5 karakter pertama)
-  const searchId = kavling.substring(0, 5).toUpperCase();
-  console.log(`Loading revision photos for pelaksana. Search ID: ${searchId}`);
-  
-  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">Memuat foto dari Google Drive...</div>';
-  
-  try {
-    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
-      action: 'getRevisionPhotosBySearchId',
-      searchId: searchId,
-      kavling: kavling
-    });
-    
-    gallery.innerHTML = '';
-    
-    if (response.success && response.photos && response.photos.length > 0) {
-      response.photos.forEach(photo => {
-        const item = document.createElement('div');
-        item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a;';
-        item.innerHTML = `
-          <img src="${photo.url}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${photo.url}', '_blank')">
-          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center;">
-            ${photo.name}
-          </div>
-        `;
-        gallery.appendChild(item);
-      });
-    } else {
-      gallery.innerHTML = `
-        <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
-          <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-          Tidak ada foto revisi yang cocok dengan ID "${searchId}"
-        </div>`;
-    }
-  } catch (error) {
-    console.error('Error loading photos for pelaksana:', error);
-    gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px;">Gagal memuat foto dari Google Drive</div>';
-  }
-}
-
-async function savePropertyDataManager() {
-  if (!selectedKavling) {
-    showToast('error', 'Pilih kavling terlebih dahulu');
+  if (!gallery) {
+    console.error(`Gallery element ${galleryId} not found for role ${role}`);
     return;
   }
 
-  const notesEl = document.getElementById('propertyNotesManager');
-  const notes = notesEl ? notesEl.value.trim() : '';
-  
-  showGlobalLoading('Menyimpan data...');
-
-  try {
-    // 1. Simpan Catatan
-    const notesResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
-      action: 'savePropertyNotes',
-      kavling: selectedKavling,
-      notes: notes
-    });
-
-    if (!notesResponse.success) {
-      hideGlobalLoading();
-      showToast('error', 'Gagal menyimpan catatan: ' + notesResponse.message);
-      return;
-    }
-
-    // Update local data
-    if (currentKavlingData && currentKavlingData.kavling === selectedKavling) {
-      currentKavlingData.propertyNotes = notes;
-    }
-
-    // 2. Simpan Foto jika ada
-    if (compressedRevisionBase64) {
-      const base64Data = compressedRevisionBase64.split(',')[1];
-      const photoResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
-        action: 'uploadRevisionPhoto',
-        kavling: selectedKavling,
-        image: base64Data,
-        filename: `revision_${selectedKavling}_${Date.now()}.jpg`
-      });
-
-      if (photoResponse.success) {
-        // Reset photo controls
-        document.getElementById('revisionPhotoPreview').style.display = 'none';
-        document.getElementById('revisionPhotoInput').value = '';
-        selectedRevisionFile = null;
-        compressedRevisionBase64 = null;
-        loadRevisionPhotos(selectedKavling);
-      } else {
-        showToast('warning', 'Catatan tersimpan, tapi gagal mengunggah foto');
-      }
-    }
-
-    showStatusModal('success', 'Berhasil', 'Data dan foto berhasil diperbarui');
-    setTimeout(() => {
-      hideGlobalLoading();
-      showToast('success', 'Data berhasil diperbarui');
-    }, 1500);
-
-  } catch (error) {
-    console.error('Error saving data:', error);
-    hideGlobalLoading();
-    showToast('error', 'Terjadi kesalahan: ' + error.message);
-  }
-}
-
-async function uploadRevisionPhoto() {
-  // Deprecated in favor of savePropertyDataManager
-  savePropertyDataManager();
-}
-
-async function loadRevisionPhotos(kavling) {
-  const gallery = document.getElementById('revisionPhotoGallery');
-  if (!gallery) return;
-  
-  // Clear gallery
-  gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 10px;">Memuat foto...</div>';
-  
-  try {
-    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
-      action: 'getRevisionPhotos',
-      kavling: kavling
-    });
-    
-    gallery.innerHTML = '';
-    
-    if (response.success && response.photos && response.photos.length > 0) {
-      response.photos.forEach(photoUrl => {
-        const item = document.createElement('div');
-        item.style.cssText = 'border-radius: 8px; overflow: hidden; border: 1px solid #334155; position: relative; aspect-ratio: 1;';
-        item.innerHTML = `
-          <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${photoUrl}', '_blank')">
-        `;
-        gallery.appendChild(item);
-      });
-    } else {
-      gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 10px;">Belum ada foto revisi</div>';
-    }
-  } catch (error) {
-    console.error('Error loading photos:', error);
-    gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 10px;">Gagal memuat foto</div>';
-  }
-}
-
-// Fungsi untuk upload foto revisi ke Google Drive (dipanggil oleh supervisor)
-async function uploadRevisionPhotoToDrive(kavlingName, base64Image) {
-  try {
-    console.log(`Frontend: Uploading photo for ${kavlingName}`);
-    
-    // Validasi
-    if (!kavlingName || !base64Image) {
-      showToast('warning', 'Nama kavling dan foto diperlukan');
-      return null;
-    }
-    
-    // Tampilkan loading
-    showToast('info', 'Mengupload foto ke Google Drive...', 5000);
-    
-    // Kirim ke Apps Script (backend) menggunakan POST
-    const response = await fetch(PROGRESS_APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        action: 'uploadRevisionPhoto',
-        kavlingName: kavlingName,
-        image: base64Image,
-        uploadedBy: 'supervisor'
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      showToast('success', '✅ Foto revisi berhasil diupload ke Google Drive');
-      console.log('Upload success:', result);
-      
-      // Refresh gallery setelah upload
-      if (currentRole === 'manager') {
-        loadRevisionPhotos(kavlingName);
-      }
-      
-      return result;
-    } else {
-      showToast('error', '❌ Gagal upload foto: ' + result.message);
-      console.error('Upload failed:', result);
-      return null;
-    }
-    
-  } catch (error) {
-    console.error('Error uploading photo:', error);
-    showToast('error', '❌ Error: ' + error.message);
-    return null;
-  }
-}
-
-// Fungsi untuk save data manager dengan foto revisi
-async function savePropertyDataManager() {
-  const kavlingName = selectedKavling;
-  const notes = document.getElementById('propertyNotesInput') ? document.getElementById('propertyNotesInput').value : '';
-  
-  if (!kavlingName) {
-    showToast('warning', 'Pilih kavling terlebih dahulu');
-    return;
-  }
-  
-  // Jika ada foto revisi yang dipilih
-  if (compressedRevisionBase64) {
-    // Upload foto terlebih dahulu
-    showToast('info', 'Mengupload foto revisi...', 5000);
-    
-    const uploadResult = await uploadRevisionPhotoToDrive(kavlingName, compressedRevisionBase64);
-    
-    if (!uploadResult) {
-      showToast('error', 'Gagal upload foto revisi, proses dibatalkan');
-      return;
-    }
-    
-    // Reset foto setelah upload sukses
-    cancelRevisionPhoto();
-  }
-  
-  // Simpan catatan property (jika ada)
-  if (notes.trim() !== '') {
-    const saveResult = await savePropertyNotes(kavlingName, notes);
-    
-    if (saveResult && saveResult.success) {
-      showToast('success', '✅ Catatan berhasil disimpan');
-    } else if (saveResult && !saveResult.success) {
-      showToast('error', '⚠️ Foto berhasil diupload, tapi gagal menyimpan catatan: ' + saveResult.message);
-    }
-  } else if (compressedRevisionBase64) {
-    // Jika hanya upload foto tanpa catatan
-    showToast('success', '✅ Foto berhasil diupload');
-  } else {
-    showToast('info', 'Tidak ada data yang perlu disimpan');
-  }
-}
-
-// Update fungsi loadRevisionPhotosForPelaksana dengan search ID yang lebih akurat
-async function loadRevisionPhotosForPelaksana(kavling, role) {
-  const galleryId = `revisionPhotoGallery${role.charAt(0).toUpperCase() + role.slice(1)}`;
-  const gallery = document.getElementById(galleryId);
-  if (!gallery) return;
-  
-  // Tentukan search ID berdasarkan pola nama kavling
+  // PERBAIKAN: Pattern matching yang lebih fleksibel
   let searchId = '';
-  
-  // Pattern matching untuk format kavling
-  // Contoh: M1_10, M1_100, A2_25, B3_50, dll
-  const pattern = /^([A-Z]\d+_)(\d+)$/i;
-  const match = kavling.match(pattern);
-  
-  if (match) {
-    // Jika format seperti M1_100
-    const prefix = match[1].toUpperCase(); // Contoh: "M1_"
-    const numberPart = match[2]; // Contoh: "100"
-    
-    if (numberPart.length <= 2) {
-      // Jika angka 1-99, ambil 5 karakter
-      searchId = kavling.substring(0, 5).toUpperCase();
-    } else {
-      // Jika angka 100+, ambil 6 karakter
-      searchId = kavling.substring(0, 6).toUpperCase();
-    }
+
+  // Extract search ID dari nama kavling
+  // Support berbagai format: M1_10, A2_25, BLOK M1, KAVLING A2, M1-10, dll
+  const cleanKavling = kavling.replace(/\s+/g, '_').toUpperCase();
+
+  // Cari pola angka dan huruf
+  const pattern1 = /([A-Z]\d+)[_-]?(\d+)/i; // M1_10, A2-25, B3_100
+  const pattern2 = /([A-Z]\d+)/i; // M1, A2, B3
+  const pattern3 = /BLOK[_-]?([A-Z]\d+)/i; // BLOK M1, BLOK_A2
+  const pattern4 = /KAVLING[_-]?([A-Z]\d+)/i; // KAVLING M1
+
+  let match;
+  if ((match = cleanKavling.match(pattern1))) {
+    // Format: M1_10
+    searchId = match[1] + '_' + match[2];
+  } else if ((match = cleanKavling.match(pattern3))) {
+    // Format: BLOK M1
+    searchId = match[1];
+  } else if ((match = cleanKavling.match(pattern4))) {
+    // Format: KAVLING M1
+    searchId = match[1];
+  } else if ((match = cleanKavling.match(pattern2))) {
+    // Format: M1
+    searchId = match[1];
   } else {
-    // Jika tidak match pattern, gunakan 5-6 karakter pertama
-    searchId = kavling.substring(0, Math.min(6, kavling.length)).toUpperCase();
+    // Fallback: 5 karakter pertama
+    searchId = kavling.substring(0, 5).toUpperCase();
   }
-  
-  console.log(`Loading revision photos for pelaksana. 
+
+  console.log(`Loading revision photos for pelaksana: 
     Kavling: ${kavling}, 
+    Clean: ${cleanKavling},
     Search ID: ${searchId}, 
     Role: ${role}`);
-  
+
   // Tampilkan loading state
   gallery.innerHTML = `
     <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px;">
       <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
-      <div>Memuat foto revisi...</div>
+      <div>Memuat foto revisi untuk ${kavling}...</div>
       <div style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
-        Mencari foto dengan kode: "${searchId}"
+        Search ID: "${searchId}"
       </div>
     </div>
   `;
-  
+
   try {
-    // Gunakan fungsi getDataFromServer yang sudah ada
     const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
       action: 'getRevisionPhotosBySearchId',
       searchId: searchId,
-      kavling: kavling
+      kavling: kavling,
+      role: role
     });
-    
+
     gallery.innerHTML = '';
-    
+
     if (response.success && response.photos && response.photos.length > 0) {
-      // Kelompokkan foto berdasarkan apakah exact match atau tidak
-      const exactMatches = response.photos.filter(p => p.matchesSearchId);
-      const otherMatches = response.photos.filter(p => !p.matchesSearchId);
-      
-      // Tampilkan foto exact matches dulu
-      if (exactMatches.length > 0) {
-        exactMatches.forEach((photo, index) => {
-          const item = createPhotoGalleryItem(photo, index + 1, true);
-          gallery.appendChild(item);
+      // Tampilkan semua foto
+      response.photos.forEach((photo, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'border-radius: 12px; overflow: hidden; border: 2px solid #334155; position: relative; aspect-ratio: 1; background: #0f172a; transition: transform 0.2s;';
+
+        item.innerHTML = `
+          <img src="${photo.url}" 
+               style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" 
+               onclick="window.open('${photo.viewUrl || photo.url}', '_blank')"
+               loading="lazy"
+               onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"400\" height=\"300\" viewBox=\"0 0 400 300\"><rect width=\"400\" height=\"300\" fill=\"%231e293b\"/><text x=\"200\" y=\"150\" font-family=\"Arial\" font-size=\"16\" fill=\"%2394a3b8\" text-anchor=\"middle\" dy=\".3em\">Gambar tidak dapat dimuat</text></svg>';"
+               alt="Foto revisi ${photo.name}">
+
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 0.75rem; padding: 5px; text-align: center; backdrop-filter: blur(4px);">
+            ${photo.name}
+          </div>
+
+          <div style="position: absolute; top: 5px; right: 5px; background: rgba(59, 130, 246, 0.9); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 10px; font-weight: bold;">
+            ${index + 1}
+          </div>
+
+          <div style="position: absolute; bottom: 30px; right: 5px; background: rgba(0,0,0,0.6); color: #cbd5e1; font-size: 0.6rem; padding: 2px 5px; border-radius: 4px;">
+            ${photo.size || 'N/A'}
+          </div>
+        `;
+
+        // Hover effect
+        item.addEventListener('mouseenter', () => {
+          item.style.transform = 'scale(1.02)';
+          item.style.borderColor = '#38bdf8';
         });
-      }
-      
-      // Tampilkan foto other matches (jika ada)
-      if (otherMatches.length > 0) {
-        // Tambahkan separator jika ada kedua jenis
-        if (exactMatches.length > 0) {
-          const separator = document.createElement('div');
-          separator.style.cssText = 'grid-column: span 2; text-align: center; padding: 10px; color: #64748b; font-size: 0.8rem;';
-          separator.innerHTML = '<hr style="border: 1px solid #334155; margin: 10px 0;">Foto terkait lainnya:';
-          gallery.appendChild(separator);
-        }
-        
-        otherMatches.forEach((photo, index) => {
-          const item = createPhotoGalleryItem(photo, exactMatches.length + index + 1, false);
-          gallery.appendChild(item);
+
+        item.addEventListener('mouseleave', () => {
+          item.style.transform = 'scale(1)';
+          item.style.borderColor = '#334155';
         });
-      }
-      
-      // Tambahkan info jumlah foto
+
+        gallery.appendChild(item);
+      });
+
+      // Tambahkan info
       const infoDiv = document.createElement('div');
       infoDiv.style.cssText = 'grid-column: span 2; text-align: center; color: #38bdf8; padding: 10px; font-size: 0.9rem;';
-      
-      let infoText = '';
-      if (exactMatches.length > 0) {
-        infoText = `<i class="fas fa-check-circle"></i> Ditemukan ${response.count} foto untuk "${kavling}"`;
-        if (otherMatches.length > 0) {
-          infoText += ` (${exactMatches.length} exact match, ${otherMatches.length} terkait)`;
-        }
-      } else {
-        infoText = `<i class="fas fa-info-circle"></i> Ditemukan ${response.count} foto terkait untuk "${kavling}"`;
-      }
-      
-      infoDiv.innerHTML = infoText;
+      infoDiv.innerHTML = `<i class="fas fa-images"></i> Ditemukan ${response.count} foto untuk "${kavling}"`;
       gallery.appendChild(infoDiv);
-      
+
     } else {
-      // Tidak ada foto yang ditemukan
+      // Tidak ada foto
       gallery.innerHTML = `
         <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
           <i class="fas fa-images" style="font-size: 2rem; margin-bottom: 10px; display: block; color: #64748b;"></i>
           <div style="margin-bottom: 10px; font-size: 0.9rem;">Tidak ada foto revisi untuk "${kavling}"</div>
           <div style="font-size: 0.8rem; color: #64748b;">
             <div>Search ID yang digunakan: "${searchId}"</div>
-            <div style="margin-top: 5px;">Format pencarian: 5-6 karakter pertama dari nama kavling</div>
+            <div style="margin-top: 5px;">Foto akan muncul setelah supervisor upload foto untuk kavling ini</div>
           </div>
         </div>`;
     }
@@ -5871,9 +6354,191 @@ async function loadRevisionPhotosForPelaksana(kavling, role) {
     gallery.innerHTML = `
       <div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px; border: 2px dashed #dc2626; border-radius: 12px;">
         <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-        <div style="margin-bottom: 10px;">Gagal memuat foto dari Google Drive</div>
+        <div style="margin-bottom: 10px;">Gagal memuat foto</div>
         <div style="font-size: 0.8rem; color: #fca5a5;">Error: ${error.message || 'Tidak dapat terhubung ke server'}</div>
       </div>`;
+  }
+}
+
+// GANTI fungsi savePropertyDataManager() dengan ini:
+async function savePropertyDataManager() {
+  if (!selectedKavling) {
+    showToast('warning', 'Pilih kavling terlebih dahulu');
+    return;
+  }
+
+  const notesEl = document.getElementById('propertyNotesManager');
+  const notes = notesEl ? notesEl.value.trim() : '';
+
+  const photoInput = document.getElementById('revisionPhotoInput');
+  let photoBase64 = null;
+
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    photoBase64 = await compressImage(photoInput.files[0]);
+  }
+
+  showGlobalLoading('Menyimpan data...');
+
+  try {
+    // 1. Simpan Catatan (jika ada)
+    if (notes !== '') {
+      const notesResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+        action: 'savePropertyNotes',
+        kavling: selectedKavling,
+        notes: notes,
+        user: 'manager'
+      });
+
+      if (!notesResponse.success) {
+        hideGlobalLoading();
+        showToast('error', 'Gagal menyimpan catatan: ' + notesResponse.message);
+        return;
+      }
+
+      if (currentKavlingData && currentKavlingData.kavling === selectedKavling) {
+        currentKavlingData.propertyNotes = notes;
+      }
+    }
+
+    // 2. Upload Foto (jika ada)
+    if (photoBase64) {
+      // Hilangkan prefix data:image/jpeg;base64,
+      const base64Data = photoBase64.split(',')[1];
+      
+      const photoResponse = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+        action: 'uploadRevisionPhoto',
+        kavlingName: selectedKavling,
+        image: base64Data, // Kirim raw base64 data tanpa prefix
+        uploadedBy: 'supervisor'
+      });
+
+      if (photoResponse && photoResponse.success) {
+        if (photoInput) {
+          photoInput.value = '';
+          const preview = document.getElementById('revisionPhotoPreview');
+          if (preview) preview.style.display = 'none';
+        }
+        loadRevisionPhotos(selectedKavling);
+        showToast('success', '✅ Foto berhasil disimpan');
+      } else {
+        showToast('warning', notes !== '' ? 'Catatan tersimpan, tapi gagal menyimpan foto' : 'Gagal menyimpan foto');
+      }
+    }
+
+    if (notes !== '' || photoBase64) {
+      showStatusModal('success', 'Berhasil', 'Data berhasil disimpan');
+      setTimeout(() => {
+        hideGlobalLoading();
+      }, 1500);
+    } else {
+      hideGlobalLoading();
+      showToast('info', 'Tidak ada data yang perlu disimpan');
+    }
+
+  } catch (error) {
+    console.error('Error saving data:', error);
+    hideGlobalLoading();
+    showToast('error', 'Terjadi kesalahan: ' + error.message);
+  }
+}
+// Tambahkan fungsi compressImage:
+async function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Max dimensions
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG with 70% quality
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressedBase64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+
+async function uploadRevisionPhoto() {
+  if (!selectedKavling) {
+    showToast('error', 'Pilih kavling terlebih dahulu');
+    return;
+  }
+
+  if (!compressedRevisionBase64) {
+    showToast('warning', 'Pilih dan kompres foto terlebih dahulu');
+    return;
+  }
+
+  showGlobalLoading('Mengupload foto revisi...');
+
+  try {
+    // Ambil hanya data base64 tanpa header data:image/jpeg;base64,
+    const base64Data = compressedRevisionBase64.split(',')[1];
+    
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'uploadRevisionPhoto',
+      kavlingName: selectedKavling,
+      image: base64Data,
+      uploadedBy: sessionStorage.getItem('loggedDisplayName') || currentRole || 'Supervisor'
+    });
+
+    if (response.success) {
+      showToast('success', 'Foto revisi berhasil diupload ke Spreadsheet');
+      cancelRevisionPhoto(); 
+      
+      // Refresh gallery
+      if (typeof loadRevisionPhotosForPelaksana === 'function') {
+        loadRevisionPhotosForPelaksana(selectedKavling, currentRole);
+      }
+    } else {
+      showToast('error', 'Gagal upload: ' + (response.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error uploading revision photo:', error);
+    showToast('error', 'Terjadi kesalahan saat upload: ' + error.message);
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+async function getRevisionPhotosFromSheet(kavlingName) {
+  try {
+    const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+      action: 'getRevisionPhotos',
+      kavlingName: kavlingName
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching revision photos:', error);
+    return { success: false, message: error.toString() };
   }
 }
 
@@ -5984,34 +6649,10 @@ async function loadRevisionPhotos(kavling) {
         
         gallery.appendChild(item);
       });
-      
-      // Tambahkan info jumlah foto
-      const infoDiv = document.createElement('div');
-      infoDiv.style.cssText = 'grid-column: span 2; text-align: center; color: #38bdf8; padding: 10px; font-size: 0.85rem;';
-      infoDiv.innerHTML = `<i class="fas fa-images"></i> ${response.count} foto revisi untuk "${kavling}"`;
-      gallery.appendChild(infoDiv);
-      
-    } else {
-      gallery.innerHTML = `
-        <div style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 20px; border: 2px dashed #334155; border-radius: 12px;">
-          <i class="fas fa-camera" style="font-size: 2rem; margin-bottom: 10px; display: block; color: #64748b;"></i>
-          <div>Belum ada foto revisi untuk kavling ini</div>
-          <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">
-            <div>Gunakan form di atas untuk upload foto revisi</div>
-            <div style="margin-top: 5px;">Format nama file: <code>[nama_kavling]_[YYYYMMDD_HHMMSS].jpg</code></div>
-          </div>
-        </div>`;
     }
   } catch (error) {
     console.error('Error loading photos:', error);
-    gallery.innerHTML = `
-      <div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 20px; border: 2px dashed #dc2626; border-radius: 12px;">
-        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-        Gagal memuat foto
-        <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 5px;">
-          ${error.message || 'Tidak dapat terhubung ke server'}
-        </div>
-      </div>`;
+    gallery.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #f43f5e; padding: 10px;">Gagal memuat foto</div>';
   }
 }
 
@@ -6056,7 +6697,45 @@ async function savePropertyNotes() {
     showToast('error', 'Terjadi kesalahan: ' + error.message);
   }
 }
+// Fungsi untuk refresh summary
+async function refreshSummary() {
+    await loadSummaryReport();
+    showToast('success', 'Laporan berhasil direfresh');
+}
 
+// Fungsi untuk download full report
+async function downloadFullReport() {
+    showGlobalLoading('Menyiapkan laporan...');
+    try {
+        const response = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+            action: 'downloadFullReport'
+        });
+        // Implementasi download
+    } catch (error) {
+        showToast('error', 'Gagal download: ' + error.message);
+    } finally {
+        hideGlobalLoading();
+    }
+}
+
+// Fungsi load utilitas data
+async function loadUtilitasData() {
+    if (!selectedKavling) return;
+
+    try {
+        const result = await getDataFromServer(PROGRESS_APPS_SCRIPT_URL, {
+            action: 'getUtilitasData',
+            kavling: selectedKavling
+        });
+
+        if (result.success) {
+            // Update UI dengan data utilitas
+            console.log('Utilitas data loaded:', result);
+        }
+    } catch (error) {
+        console.error('Error loading utilitas:', error);
+    }
+}
 function loadPropertyNotes(kavlingName) {
   // Fungsi untuk load property notes
   console.log('loadPropertyNotes called for:', kavlingName);
