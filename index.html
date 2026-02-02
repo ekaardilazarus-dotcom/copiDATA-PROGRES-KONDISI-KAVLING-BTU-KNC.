@@ -1,0 +1,3683 @@
+<!--  versi 0.5 -->
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DATA PROGRES & KONDISI KAVLING BTU KNC</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>DATA PROGRES & KONDISI KAVLING BTU KNC</h1>
+        <p class="subtitle">
+          Sistem pemantauan progres pembangunan untuk berbagai peran pengguna.
+          Pilih peran Anda untuk mengakses informasi yang sesuai.
+        </p>
+      </header>
+
+      <!-- Flatpickr CSS & JS -->
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+      />
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="https://npmcdn.com/flatpickr/dist/themes/dark.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+      <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+
+      <div class="main-content">
+        <!-- Section Pelaksana Lapangan -->
+        <div class="section-container">
+          <h2 class="section-title">Pelaksana Lapangan</h2>
+          <div class="role-selector lapangan-set" id="lapanganSelector">
+            <button
+              class="role-btn user1"
+              data-role="user1"
+              type="button"
+              aria-label="Login sebagai Pelaksana 1"
+            >
+              <i class="fas fa-hard-hat"></i>
+              <h3>Pelaksana 1</h3>
+            </button>
+            <button
+              class="role-btn user2"
+              data-role="user2"
+              type="button"
+              aria-label="Login sebagai Pelaksana 2"
+            >
+              <i class="fas fa-hard-hat"></i>
+              <h3>Pelaksana 2</h3>
+            </button>
+            <button
+              class="role-btn user3"
+              data-role="user3"
+              type="button"
+              aria-label="Login sebagai Pelaksana 3"
+            >
+              <i class="fas fa-hard-hat"></i>
+              <h3>Pelaksana 3</h3>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Manager & Admin Property -->
+        <div class="section-container">
+          <h2 class="section-title">Management & Admin Property</h2>
+          <div
+            class="role-selector manager-handover-set"
+            id="managerHandoverSelector"
+          >
+            <button
+              class="role-btn user4"
+              data-role="user4"
+              type="button"
+              aria-label="Login untuk Input Mutasi Kunci"
+            >
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  font-size: 2rem;
+                  margin-bottom: 12px;
+                  color: white;
+                "
+              >
+                <i class="fas fa-key"></i>
+                <i class="fas fa-bolt"></i>
+                <i class="fas fa-tint"></i>
+              </div>
+              <h3>Admin Utilitas</h3>
+            </button>
+            <button
+              class="role-btn manager"
+              data-role="manager"
+              type="button"
+              aria-label="Login sebagai Supervisor"
+            >
+              <i class="fas fa-user-tie"></i>
+              <h3>Supervisor</h3>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Admin -->
+        <div class="section-container">
+          <h2 class="section-title">Administrator Sistem</h2>
+          <div class="role-selector admin-set" id="adminSelector">
+            <button
+              class="role-btn admin"
+              data-role="admin"
+              type="button"
+              aria-label="Login sebagai Admin"
+              style="grid-column: span 2"
+            >
+              <i class="fas fa-user-secret"></i>
+              <h3>Admin</h3>
+              <span class="badge">Administrator Sistem</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Global Loading Modal -->
+      <div id="loadingModal" class="modal" style="display: none">
+        <div class="modal-content" style="max-width: 300px; padding: 30px">
+          <i
+            class="fas fa-spinner fa-spin"
+            style="font-size: 3rem; color: #38bdf8; margin-bottom: 20px"
+          ></i>
+          <h2 style="font-size: 1.25rem">Mohon Tunggu</h2>
+          <p id="loadingText">Sedang mengambil data...</p>
+        </div>
+      </div>
+
+      <!-- Toast Notification Template -->
+      <template id="toastTemplate">
+        <div class="toast">
+          <div class="toast-content">
+            <i class="fas"></i>
+            <span class="toast-message"></span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Password Modal -->
+      <div id="passwordModal" class="modal" style="display: none">
+        <div
+          class="modal-content"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalTitle"
+        >
+          <span class="close-btn" role="button" aria-label="Tutup"
+            >&times;</span
+          >
+          <h2 id="modalTitle">Verifikasi Akses</h2>
+          <p>Silakan masukkan password untuk mengakses halaman ini.</p>
+          <input
+            type="password"
+            id="passwordInput"
+            placeholder="Masukkan Password"
+            aria-label="Password"
+            autocomplete="off"
+          />
+          <div
+            id="errorMessage"
+            style="color: #f43f5e; margin-bottom: 15px; font-weight: 600"
+            aria-live="polite"
+          ></div>
+          <button id="submitPassword">Masuk</button>
+        </div>
+      </div>
+
+      <!-- Add Kavling Modal -->
+      <div id="addKavlingModal" class="modal" style="display: none">
+        <div class="modal-content" style="max-width: 450px">
+          <span class="close-btn" id="closeAddKavling">&times;</span>
+          <h2 style="margin-bottom: 20px; color: #38bdf8">
+            <i class="fas fa-plus-circle"></i> Tambah Kavling Baru
+          </h2>
+
+          <div style="text-align: left">
+            <!-- Nama Kavling -->
+            <div style="margin-bottom: 15px">
+              <label
+                style="
+                  display: block;
+                  margin-bottom: 8px;
+                  color: #94a3b8;
+                  font-weight: 600;
+                "
+              >
+                <i class="fas fa-map-marker-alt"></i> Nama Kavling *
+              </label>
+              <input
+                type="text"
+                id="newKavlingName"
+                placeholder="Contoh: M5_11, UJ35_20 (nama blok_nomor)"
+                style="
+                  width: 100%;
+                  padding: 14px;
+                  border-radius: 10px;
+                  background: #0f172a;
+                  color: white;
+                  border: 2px solid #334155;
+                  font-size: 1rem;
+                "
+                autocomplete="off"
+              />
+              <div style="margin-top: 5px; font-size: 0.85rem; color: #f59e0b">
+                <i class="fas fa-info-circle"></i> Format: Blok_Nomor (Contoh:
+                M1_11)
+              </div>
+            </div>
+
+            <!-- Type Kavling -->
+            <div style="margin-bottom: 15px">
+              <label
+                style="
+                  display: block;
+                  margin-bottom: 8px;
+                  color: #94a3b8;
+                  font-weight: 600;
+                "
+              >
+                <i class="fas fa-tag"></i> Type *
+              </label>
+              <input
+                type="text"
+                id="newKavlingType"
+                placeholder="Contoh: T40 RUBY"
+                style="
+                  width: 100%;
+                  padding: 14px;
+                  border-radius: 10px;
+                  background: #0f172a;
+                  color: white;
+                  border: 2px solid #334155;
+                  font-size: 1rem;
+                "
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- LT dan LB -->
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 25px;
+              "
+            >
+              <div>
+                <label
+                  style="
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                  "
+                >
+                  <i class="fas fa-vector-square"></i> Luas Tanah (LT)m²
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <input
+                    type="text"
+                    id="newKavlingLT"
+                    placeholder="72"
+                    style="
+                      flex: 1;
+                      padding: 14px;
+                      border-radius: 10px;
+                      background: #0f172a;
+                      color: white;
+                      border: 2px solid #334155;
+                      font-size: 1rem;
+                    "
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style="
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                  "
+                >
+                  <i class="fas fa-building"></i> Luas Bangunan (LB)m²
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <input
+                    type="text"
+                    id="newKavlingLB"
+                    placeholder="36"
+                    style="
+                      flex: 1;
+                      padding: 14px;
+                      border-radius: 10px;
+                      background: #0f172a;
+                      color: white;
+                      border: 2px solid #334155;
+                      font-size: 1rem;
+                    "
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tombol Aksi -->
+          <div style="display: flex; gap: 10px; margin-top: 20px">
+            <button
+              id="submitNewKavling"
+              style="
+                flex: 3;
+                padding: 14px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+              "
+            >
+              <i class="fas fa-save"></i> Simpan Kavling Baru
+            </button>
+            <button
+              onclick="document.getElementById('addKavlingModal').style.display='none';"
+              style="
+                flex: 1;
+                padding: 14px;
+                background: linear-gradient(135deg, #64748b, #475569);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+              "
+            >
+              <i class="fas fa-times"></i> Batal
+            </button>
+          </div>
+
+          <!-- Catatan -->
+          <div
+            style="
+              margin-top: 20px;
+              padding: 15px;
+              background: rgba(56, 189, 248, 0.1);
+              border-radius: 10px;
+              border: 1px solid #38bdf8;
+            "
+          >
+            <div style="display: flex; align-items: flex-start; gap: 10px">
+              <i
+                class="fas fa-lightbulb"
+                style="color: #f59e0b; font-size: 1.2rem; margin-top: 2px"
+              ></i>
+              <div style="flex: 1">
+                <h4
+                  style="margin: 0 0 5px 0; color: #f59e0b; font-size: 0.95rem"
+                >
+                  Informasi:
+                </h4>
+                <p style="margin: 0; color: #94a3b8; font-size: 0.85rem">
+                  Kavling baru akan ditambahkan ke data dengan progress (0%).
+                  Anda dapat mengisi progress setelah kavling ditambahkan.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Kavling Modal -->
+      <div id="editKavlingModal" class="modal" style="display: none">
+        <div class="modal-content" style="max-width: 450px">
+          <span class="close-btn" id="closeEditKavling">&times;</span>
+          <h2 style="margin-bottom: 20px; color: #6366f1">
+            <i class="fas fa-edit"></i> Edit Kavling
+          </h2>
+
+          <div style="text-align: left">
+            <!-- Nama Kavling -->
+            <div style="margin-bottom: 15px">
+              <label
+                style="
+                  display: block;
+                  margin-bottom: 8px;
+                  color: #94a3b8;
+                  font-weight: 600;
+                "
+              >
+                <i class="fas fa-map-marker-alt"></i> Nama Kavling *
+              </label>
+              <input
+                type="text"
+                id="editKavlingName"
+                placeholder="Contoh: M5_11"
+                style="
+                  width: 100%;
+                  padding: 14px;
+                  border-radius: 10px;
+                  background: #0f172a;
+                  color: white;
+                  border: 2px solid #334155;
+                  font-size: 1rem;
+                "
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Type Kavling -->
+            <div style="margin-bottom: 15px">
+              <label
+                style="
+                  display: block;
+                  margin-bottom: 8px;
+                  color: #94a3b8;
+                  font-weight: 600;
+                "
+              >
+                <i class="fas fa-tag"></i> Type *
+              </label>
+              <input
+                type="text"
+                id="editKavlingType"
+                placeholder="Contoh: T40 RUBY"
+                style="
+                  width: 100%;
+                  padding: 14px;
+                  border-radius: 10px;
+                  background: #0f172a;
+                  color: white;
+                  border: 2px solid #334155;
+                  font-size: 1rem;
+                "
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- LT dan LB -->
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 25px;
+              "
+            >
+              <div>
+                <label
+                  style="
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                  "
+                >
+                  <i class="fas fa-vector-square"></i> Luas Tanah (LT)m²
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <input
+                    type="text"
+                    id="editKavlingLT"
+                    placeholder="72"
+                    style="
+                      flex: 1;
+                      padding: 14px;
+                      border-radius: 10px;
+                      background: #0f172a;
+                      color: white;
+                      border: 2px solid #334155;
+                      font-size: 1rem;
+                    "
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style="
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                  "
+                >
+                  <i class="fas fa-building"></i> Luas Bangunan (LB)m²
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <input
+                    type="text"
+                    id="editKavlingLB"
+                    placeholder="36"
+                    style="
+                      flex: 1;
+                      padding: 14px;
+                      border-radius: 10px;
+                      background: #0f172a;
+                      color: white;
+                      border: 2px solid #334155;
+                      font-size: 1rem;
+                    "
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tombol Aksi -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+              margin-top: 20px;
+            "
+          >
+            <div style="display: flex; gap: 10px">
+              <button
+                id="submitEditKavling"
+                class="btn-edit-submit"
+                style="
+                  flex: 3;
+                  padding: 14px;
+                  background: linear-gradient(135deg, #6366f1, #4f46e5);
+                  color: white;
+                  border: none;
+                  border-radius: 10px;
+                  font-weight: 700;
+                  cursor: pointer;
+                  font-size: 1rem;
+                  transition: all 0.2s ease;
+                "
+              >
+                <i class="fas fa-save"></i> Update Data Kavling
+              </button>
+              <button
+                onclick="document.getElementById('editKavlingModal').style.display='none';"
+                class="btn-edit-cancel"
+                style="
+                  flex: 1;
+                  padding: 14px;
+                  background: linear-gradient(135deg, #64748b, #475569);
+                  color: white;
+                  border: none;
+                  border-radius: 10px;
+                  font-weight: 700;
+                  cursor: pointer;
+                  font-size: 1rem;
+                  transition: all 0.2s ease;
+                "
+              >
+                <i class="fas fa-times"></i> Batal
+              </button>
+            </div>
+            <button
+              id="deleteKavlingData"
+              class="btn-edit-delete"
+              style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #f43f5e, #e11d48);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: all 0.2s ease;
+              "
+            >
+              <i class="fas fa-trash-alt"></i> Hapus Data Kavling
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== PAGES ============================== -->
+
+      <!-- PAGE: user1 -->
+      <div class="page-content user1-page" id="user1Page" aria-hidden="true">
+        <div class="page-header">
+          <div class="page-title">
+            <i class="fas fa-hard-hat"></i>
+            <h2 id="user1Title">Dashboard Pelaksana 1</h2>
+          </div>
+          <div class="dashboard-buttons-grid">
+            <button class="logout-btn combined-btn" type="button">
+              <i class="fas fa-sign-out-alt"></i> Kembali ke Menu Awal & Logout
+            </button>
+            <button class="btn-edit-kavling" type="button">
+              <i class="fas fa-edit"></i> Edit Kavling
+            </button>
+            <button class="btn-add-kavling" type="button">
+              <i class="fas fa-plus-circle"></i> Tambah Kavling
+            </button>
+            <button class="sync-btn combined-btn" type="button">
+              <i class="fas fa-sync-alt"></i> Sinkronkan Data
+            </button>
+          </div>
+        </div>
+
+        <div class="page-layout">
+          <div class="sidebar-kavling">
+            <div class="search-section">
+              <div class="search-box">
+                <div class="custom-search-container">
+                  <input
+                    type="text"
+                    id="searchKavlingUser1Input"
+                    class="search-input-custom"
+                    placeholder="Cari Kavling..."
+                    autocomplete="off"
+                  />
+                  <div
+                    id="searchKavlingUser1List"
+                    class="custom-dropdown-list"
+                    style="display: none"
+                  ></div>
+                  <select id="searchKavlingUser1" style="display: none">
+                    <option value="">-- Pilih Kavling --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="kavling-info-display" id="kavlingInfoUser1">
+                <div class="info-item">
+                  <span class="info-label">Blok/Kavling:</span>
+                  <span class="info-value val-name">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Type:</span>
+                  <span class="info-value val-type">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Tanah (LT):</span>
+                  <span class="info-value val-lt">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Bangunan (LB):</span>
+                  <span class="info-value val-lb">-</span>
+              </div>
+                <div class="info-item">
+                  <span class="info-label">>Tanggal HandOver Kunci ke User::</span>
+                  <span class="info-value val-HOuser">-</span>
+              </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <div class="overall-rekap">
+              <div class="rekap-header">
+                <h3>Keseluruhan Progres Proyek</h3>
+                <span class="total-percent" aria-live="polite">0%</span>
+              </div>
+              <div class="progress-bar main">
+                <div class="progress-fill total-bar" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Pelaksana Tabs -->
+            <div class="admin-tabs pelaksana-tabs">
+              <button class="admin-tab-btn active" data-tab="user1-tahap1">
+                <i class="fas fa-layer-group"></i> Tahap 1
+              </button>
+              <button class="admin-tab-btn" data-tab="user1-tahap2">
+                <i class="fas fa-layer-group"></i> Tahap 2
+              </button>
+              <button class="admin-tab-btn" data-tab="user1-tahap3">
+                <i class="fas fa-layer-group"></i> Tahap 3
+              </button>
+              <button class="admin-tab-btn" data-tab="user1-tahap4">
+                <i class="fas fa-layer-group"></i> Tahap 4
+              </button>
+              <button class="admin-tab-btn" data-tab="user1-kondisi_saat_ini">
+                <i class="fas fa-tools"></i> Kondisi Unit Saat Ini
+              </button>
+            </div>
+
+            <div class="tab-content pelaksana-tab-content">
+              <!-- TAHAP 1 - USER 1 -->
+              <div id="tab-user1-tahap1" class="tab-content-item active">
+                <div class="progress-section detailed" data-tahap="1">
+                  <div class="section-header-flex">
+                    <h3>Tahap 1: Progres Kerja Struktur Awal</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap1" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- LAND CLEARING dengan pilihan 50%, 90%, 100% -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">LAND CLEARING</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="LAND CLEARING" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="LAND CLEARING" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="LAND CLEARING" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="land-clearing-progress"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="LAND CLEARING"
+                        id="landClearingInputUser1"
+                      />
+                    </div>
+
+                    <!-- PONDASI dengan pilihan 50%, 90%, 100% -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PONDASI</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PONDASI" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PONDASI" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PONDASI" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="pondasi-progress"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PONDASI"
+                        id="pondasiInputUser1"
+                      />
+                    </div>
+
+                    <!-- SLOOF dengan pilihan 50%, 90%, 100% -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">SLOOF</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="SLOOF" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="SLOOF" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="SLOOF" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="sloof-progress"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="SLOOF"
+                        id="sloofInputUser1"
+                      />
+                    </div>
+
+                    <!-- PASANG DINDING S/D CANOPY -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PASANG DINDING SAMPAI DENGAN CANOPY</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D2 CANOPY" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D2 CANOPY" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D2 CANOPY" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PAS.DDG S/D2 CANOPY"
+                        id="pasDdgCanopyInputUser1"
+                      />
+                    </div>
+
+                    <!-- PASANG DINDING S/D RING BALK -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PASANG DINDING SAMPAI DENGAN RING BALK</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D RING BLK" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D RING BLK" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAS.DDG S/D RING BLK" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PAS.DDG S/D RING BLK"
+                        id="pasDdgRingBlkInputUser1"
+                      />
+                    </div>
+
+                    <!-- CONDUIT+INBOW DOOS -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">CONDUIT+INBOW DOOS</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="CONDUIT+INBOW DOOS" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CONDUIT+INBOW DOOS" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CONDUIT+INBOW DOOS" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="CONDUIT+INBOW DOOS"
+                        id="conduitInputUser1"
+                      />
+                    </div>
+
+                    <!-- PIPA AIR KOTOR -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PIPA AIR KOTOR</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PIPA AIR KOTOR" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PIPA AIR KOTOR" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PIPA AIR KOTOR" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PIPA AIR KOTOR"
+                        id="pipaAirKotorInputUser1"
+                      />
+                    </div>
+
+                    <!-- PIPA AIR BERSIH -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PIPA AIR BERSIH</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PIPA AIR BERSIH" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PIPA AIR BERSIH" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PIPA AIR BERSIH" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PIPA AIR BERSIH"
+                        id="pipaAirBersihInputUser1"
+                      />
+                    </div>
+
+                    <!-- SISTEM PEMBUANGAN (pilihan Biotank/Ipal/Septictank) -->
+                    <div class="task-item-standalone waste-system">
+                      <span class="item-title">SISTEM PEMBUANGAN</span>
+                      <div class="dual-state-buttons">
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="biotank"
+                          data-active="false"
+                        >
+                          Biotank
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="ipal"
+                          data-active="false"
+                        >
+                          Ipal
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="septictank"
+                          data-active="false"
+                        >
+                          Septictank
+                        </button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="waste-system"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="SISTEM PEMBUANGAN"
+                        id="wasteSystemInputUser1"
+                      />
+                    </div>
+
+                    <!-- PLESTER -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PLESTER</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PLESTER" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PLESTER" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PLESTER" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="PLESTER"
+                        id="plesterInputUser1"
+                      />
+                    </div>
+
+                    <!-- ACIAN & BENANGAN -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">ACIAN & BENANGAN</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="ACIAN & BENANGAN" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="ACIAN & BENANGAN" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="ACIAN & BENANGAN" data-value="100%">100%</button>
+                      </div>
+                      <input
+                        type="hidden"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="ACIAN & BENANGAN"
+                        id="acianBenInputUser1"
+                      />
+                    </div>
+
+                    <!-- COR MEJA DAPUR (pilihan Dengan/Tanpa) -->
+                    <div class="task-item-standalone table-kitchen">
+                      <span class="item-title">COR MEJA DAPUR</span>
+                      <div class="dual-state-buttons">
+                        <button
+                          type="button"
+                          class="state-btn table-btn"
+                          data-state="include"
+                          data-active="false"
+                        >
+                          Dengan COR MEJA DAPUR
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn table-btn"
+                          data-state="exclude"
+                          data-active="false"
+                        >
+                          Tanpa COR MEJA DAPUR
+                        </button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="table-kitchen"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="COR MEJA DAPUR"
+                        id="tableKitchenInputUser1"
+                      />
+                    </div>
+
+                  </div>
+                  <button class="btn-save-section" type="button" data-tahap="1">
+                    <i class="fas fa-save"></i> Simpan Tahap 1
+                  </button>
+                </div>
+              </div>
+
+           <!-- TAHAP 2 - USER 1 -->
+              <div id="tab-user1-tahap2" class="tab-content-item">
+                <div class="progress-section detailed" data-tahap="2">
+                  <div class="section-header-flex">
+                    <h3>Tahap 2: Progres Kerja Atap, Dinding & Lantai</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap2" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- RANGKA ATAP -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">RANGKA ATAP</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="RANGKA ATAP" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="RANGKA ATAP" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="RANGKA ATAP" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="RANGKA ATAP" id="rangkaAtapInputUser1" />
+                    </div>
+
+                    <!-- GENTENG -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">GENTENG</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="GENTENG" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="GENTENG" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="GENTENG" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="GENTENG" id="gentengInputUser1" />
+                    </div>
+
+                    <!-- PLAFOND -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PLAFOND</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PLAFOND" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PLAFOND" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PLAFOND" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="PLAFOND" id="plafondInputUser1" />
+                    </div>
+
+                    <!-- KERAMIK DINDING (pilihan Dengan/Tanpa) -->
+                    <div class="task-item-standalone bathroom-tiles">
+                      <span class="item-title">KERAMIK DINDING TOILET & DAPUR</span>
+                      <div class="dual-state-buttons">
+                        <button type="button" class="state-btn tiles-btn" data-state="include" data-active="false">Dengan Keramik Dinding</button>
+                        <div class="vertical-divider">|</div>
+                        <button type="button" class="state-btn tiles-btn" data-state="exclude" data-active="false">Tanpa Keramik Dinding</button>
+                      </div>
+                      <input type="hidden" name="bathroom-tiles" value="" class="sub-task" data-weight="1" data-task="KERAMIK DINDING TOILET & DAPUR" id="bathroomTilesInputUser1" />
+                    </div>
+
+                    <!-- INSTALASI LISTRIK -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">INSTALASI LISTRIK</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="INSTALASI LISTRIK" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="INSTALASI LISTRIK" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="INSTALASI LISTRIK" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="INSTALASI LISTRIK" id="instalasiListrikInputUser1" />
+                    </div>
+
+                    <!-- KERAMIK LANTAI -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">KERAMIK LANTAI</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="KERAMIK LANTAI" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="KERAMIK LANTAI" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="KERAMIK LANTAI" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="KERAMIK LANTAI" id="keramikLantaiInputUser1" />
+                    </div>
+
+                  </div>
+                  <button class="btn-save-section" type="button" data-tahap="2">
+                    <i class="fas fa-save"></i> Simpan Tahap 2
+                  </button>
+                </div>
+              </div>
+
+              <!-- TAHAP 3 - USER 1 -->
+              <div id="tab-user1-tahap3" class="tab-content-item">
+                <div class="progress-section detailed" data-tahap="3">
+                  <div class="section-header-flex">
+                    <h3>Tahap 3: Progres Kerja Pemasangan Fasilitas</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap3" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- KUSEN PINTU & JENDELA -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">KUSEN PINTU & JENDELA</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="KUSEN PINTU & JENDELA" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="KUSEN PINTU & JENDELA" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="KUSEN PINTU & JENDELA" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="KUSEN PINTU & JENDELA" />
+                    </div>
+
+                    <!-- DAUN PINTU & JENDELA -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">DAUN PINTU & JENDELA</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="DAUN PINTU & JENDELA" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="DAUN PINTU & JENDELA" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="DAUN PINTU & JENDELA" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="DAUN PINTU & JENDELA" />
+                    </div>
+
+                    <!-- CAT DASAR + LAPIS AWAL -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">CAT DASAR + LAPIS AWAL</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="CAT DASAR + LAPIS AWAL" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT DASAR + LAPIS AWAL" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT DASAR + LAPIS AWAL" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="CAT DASAR + LAPIS AWAL" />
+                    </div>
+
+                    <!-- FITTING LAMPU -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">FITTING LAMPU</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="FITTING LAMPU" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="FITTING LAMPU" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="FITTING LAMPU" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="FITTING LAMPU" />
+                    </div>
+
+                    <!-- FIXTURE & SANITER -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">FIXTURE & SANITER</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="FIXTURE & SANITER" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="FIXTURE & SANITER" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="FIXTURE & SANITER" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="FIXTURE & SANITER" />
+                    </div>
+
+                    <!-- CAT FINISH INTERIOR -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">CAT FINISH INTERIOR</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="CAT FINISH INTERIOR" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT FINISH INTERIOR" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT FINISH INTERIOR" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="CAT FINISH INTERIOR" />
+                    </div>
+
+                    <!-- CAT FINISH EXTERIOR -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">CAT FINISH EXTERIOR</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="CAT FINISH EXTERIOR" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT FINISH EXTERIOR" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="CAT FINISH EXTERIOR" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="CAT FINISH EXTERIOR" />
+                    </div>
+
+                    <!-- BAK KONTROL & BATAS CARPORT -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">BAK KONTROL & BATAS CARPORT</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="BAK KONTROL & BATAS CARPORT" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="BAK KONTROL & BATAS CARPORT" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="BAK KONTROL & BATAS CARPORT" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="BAK KONTROL & BATAS CARPORT" />
+                    </div>
+
+                    <!-- PAVING HALAMAN / CARPOT -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">PAVING HALAMAN / Carpot</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="PAVING HALAMAN" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAVING HALAMAN" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="PAVING HALAMAN" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="PAVING HALAMAN" />
+                    </div>
+
+                    <!-- METERAN LISTRIK -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Meteran Listrik</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="METERAN LISTRIK" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="METERAN LISTRIK" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="METERAN LISTRIK" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="METERAN LISTRIK" />
+                    </div>
+
+                    <!-- METERAN PDAM -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Meteran PDAM</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="METERAN AIR" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="METERAN AIR" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="METERAN AIR" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="METERAN AIR" />
+                    </div>
+
+                    <!-- KONEKTING PIPA AIR BERSIH -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Konekting Pipa Air Bersih</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="Konekting Air Bersih" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Konekting Air Bersih" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Konekting Air Bersih" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="Konekting Air Bersih" />
+                    </div>
+
+                  </div>
+                  <button class="btn-save-section" type="button" data-tahap="3">
+                    <i class="fas fa-save"></i> Simpan Tahap 3
+                  </button>
+                </div>
+              </div>
+
+
+            <!-- TAHAP 4 - USER 1 -->
+              <div id="tab-user1-tahap4" class="tab-content-item">
+                <div class="progress-section detailed" data-tahap="4">
+                  <div class="section-header-flex">
+                    <h3>Tahap 4: Progres Kerja Interior & Exterior</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap4" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- KONEKTING PIPA AIR KOTOR -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Konekting Pipa Air Kotor</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="Konekting Air Kotor" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Konekting Air Kotor" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Konekting Air Kotor" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="Konekting Air Kotor" />
+                    </div>
+
+                    <!-- GORONG-GORONG -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Gorong-Gorong</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="Gorong-gorong" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Gorong-gorong" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Gorong-gorong" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="Gorong-gorong" />
+                    </div>
+
+                    <!-- AKSES JALAN -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">Akses Jalan</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="Akses Jalan" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Akses Jalan" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="Akses Jalan" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="Akses Jalan" />
+                    </div>
+
+                    <!-- GENERAL CLEANING -->
+                    <div class="task-item-standalone progress-choice">
+                      <span class="item-title">GENERAL CLEANING</span>
+                      <div class="progress-buttons">
+                        <button type="button" class="progress-btn" data-task="GENERAL CLEANING" data-value="50%">50%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="GENERAL CLEANING" data-value="90%">90%</button>
+                        <div class="progress-divider">|</div>
+                        <button type="button" class="progress-btn" data-task="GENERAL CLEANING" data-value="100%">100%</button>
+                      </div>
+                      <input type="hidden" value="" class="sub-task" data-weight="1" data-task="GENERAL CLEANING" />
+                    </div>
+
+                  </div>
+
+                  <!-- Catatan Keterangan -->
+                  <div style="margin-top: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+                      <i class="fas fa-sticky-note"></i> Keterangan
+                    </label>
+                    <textarea
+                      id="keteranganTahap4User1"
+                      style="width: 100%; height: 100px; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem; resize: vertical;"
+                      placeholder="Masukkan keterangan tambahan di sini..."
+                    ></textarea>
+                  </div>
+
+                  <!-- Info Pengembalian Kunci -->
+                  <div style="margin-top: 20px; padding: 15px; background: rgba(56, 189, 248, 0.1); border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.3);">
+                    <h4 style="margin-bottom: 12px; color: #38bdf8;">
+                      <i class="fas fa-key"></i> Pengembalian Kunci Setelah Pembangunan
+                    </h4>
+                    
+                    <div style="margin-bottom: 15px;">
+                      <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+                        Diberikan Kepada Siapa?
+                      </label>
+                      <input
+                        type="text"
+                        id="keyReturnRecipientUser1"
+                        placeholder="Nama penerima kunci"
+                        style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;"
+                      />
+                    </div>
+
+                    <div>
+                      <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+                        Tanggal Pengembalian Kunci
+                      </label>
+                      <input
+                        type="date"
+                        id="keyReturnDateUser1"
+                        style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;"
+                      />
+                    </div>
+                  </div>
+
+                  <button class="btn-save-section" type="button" data-tahap="4">
+                    <i class="fas fa-save"></i> Simpan Tahap 4
+                  </button>
+                </div>
+              </div>
+
+              <!-- TAB KONDISI UNIT SAAT INI -->
+              <div id="tab-user1-kondisi_saat_ini" class="tab-content-item">
+                <div class="progress-section detailed" data-tahap="revisi">
+                  <div class="section-header-flex">
+                    <h3>Kondisi Unit Saat Ini</h3>
+                  </div>
+
+                  <div class="kondisi-unit-content" style="margin-top: 20px;">
+                    <div class="input-group" style="margin-bottom: 20px;">
+                      <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-size: 0.9rem;">Area Catatan Kondisi Properti:</label>
+                      <textarea id="kondisiUnitNotesUser1" class="sub-task" data-task="KETERANGAN_KONDISI_UNIT" placeholder="Masukkan keterangan detail mengenai kondisi unit saat ini..." style="width: 100%; min-height: 150px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; color: white; font-family: inherit; font-size: 0.9rem; line-height: 1.5;"></textarea>
+                    </div>
+
+                    <div class="Kondisi-image-container">
+                      <label style="display: block; margin-bottom: 12px; color: #94a3b8; font-size: 0.9rem; font-weight: 600;">
+                        <i class="fas fa-camera-retro"></i> Unggah Foto Kondisi Properti (Max 6)
+                      </label>
+                      <div style="margin-bottom: 15px; color: #64748b; font-size: 0.8rem;">
+                        <i class="fas fa-info-circle"></i> Foto akan dikompresi otomatis untuk mempercepat pengunggahan.
+                      </div>
+                      <input type="file" id="revisiPhotoInputUser1" accept="image/*" multiple style="display: none;" />
+                      <button type="button" class="btn-upload-foto" onclick="document.getElementById('revisiPhotoInputUser1').click()" style="background: linear-gradient(135deg, #334155, #1e293b); color: white; border: 1px solid #475569; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 15px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                        <i class="fas fa-plus"></i> Pilih & Unggah Foto
+                      </button>
+                      <div id="revisiImagePreview1User1" class="photo-preview-container" style="width: 100%; min-height: 100px; background: #0f172a; border: 2px dashed #334155; border-radius: 12px; display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; align-items: center; justify-content: center; color: #64748b; font-size: 0.9rem;">
+                        <div style="text-align: center;">
+                          <i class="fas fa-images" style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                          <span>Belum ada foto yang dipilih</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn-save-section btn-save-revisi" type="button" data-tahap="revisi" style="margin-top: 20px;">
+                    <i class="fas fa-save"></i> Simpan Kondisi Unit
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: user2 -->
+      <div class="page-content user2-page" id="user2Page" aria-hidden="true">
+        <div class="page-header">
+          <div class="page-title">
+            <i class="fas fa-hard-hat"></i>
+            <h2 id="user2Title">Dashboard Pelaksana 2</h2>
+          </div>
+          <div class="dashboard-buttons-grid">
+            <button class="logout-btn combined-btn" type="button">
+              <i class="fas fa-sign-out-alt"></i> Kembali ke Menu Awal & Logout
+            </button>
+            <button class="btn-edit-kavling" type="button">
+              <i class="fas fa-edit"></i> Edit Kavling
+            </button>
+            <button class="btn-add-kavling" type="button">
+              <i class="fas fa-plus-circle"></i> Tambah Kavling
+            </button>
+            <button class="sync-btn combined-btn" type="button">
+              <i class="fas fa-sync-alt"></i> Sinkronkan Data
+            </button>
+          </div>
+        </div>
+
+        <div class="page-layout">
+          <div class="sidebar-kavling">
+            <div class="search-section">
+              <div class="search-box">
+                <div class="custom-search-container">
+                  <input
+                    type="text"
+                    id="searchKavlingUser2Input"
+                    class="search-input-custom"
+                    placeholder="Cari Kavling..."
+                    autocomplete="off"
+                  />
+                  <div
+                    id="searchKavlingUser2List"
+                    class="custom-dropdown-list"
+                    style="display: none"
+                  ></div>
+                  <select id="searchKavlingUser2" style="display: none">
+                    <option value="">-- Pilih Kavling --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="kavling-info-display" id="kavlingInfoUser2">
+                <div class="info-item">
+                  <span class="info-label">Blok/Kavling:</span>
+                  <span class="info-value val-name">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Type:</span>
+                  <span class="info-value val-type">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Tanah (LT):</span>
+                  <span class="info-value val-lt">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Bangunan (LB):</span>
+                  <span class="info-value val-lb">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">>Tanggal HandOver Kunci ke User::</span>
+                  <span class="info-value val-HOuser">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <div class="overall-rekap">
+              <div class="rekap-header">
+                <h3>Keseluruhan Progres Proyek</h3>
+                <span class="total-percent" aria-live="polite">0%</span>
+              </div>
+              <div class="progress-bar main">
+                <div class="progress-fill total-bar" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Pelaksana Tabs -->
+            <div class="admin-tabs pelaksana-tabs">
+              <button class="admin-tab-btn active" data-tab="user2-tahap1">
+                <i class="fas fa-layer-group"></i> Tahap 1
+              </button>
+              <button class="admin-tab-btn" data-tab="user2-tahap2">
+                <i class="fas fa-layer-group"></i> Tahap 2
+              </button>
+              <button class="admin-tab-btn" data-tab="user2-tahap3">
+                <i class="fas fa-layer-group"></i> Tahap 3
+              </button>
+              <button class="admin-tab-btn" data-tab="user2-tahap4">
+                <i class="fas fa-layer-group"></i> Tahap 4
+              </button>
+              <button class="admin-tab-btn" data-tab="user2-kondisi_saat_ini">
+                <i class="fas fa-tools"></i> Kondisi Unit Saat Ini
+              </button>
+            </div>
+
+            <div class="tab-content pelaksana-tab-content">
+              <!-- TAHAP 1 - USER 2 -->
+              <div id="tab-user2-tahap1" class="tab-content-item active">
+                <div class="progress-section detailed" data-tahap="1">
+                  <div class="section-header-flex">
+                    <h3>Tahap 1: Progres Kerja Struktur Awal</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap1" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- LAND CLEARING dengan slider persentase -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">LAND CLEARING</span>
+                        <span class="slider-percent-box" id="landClearingPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value="0"
+                            class="progress-slider sub-task"
+                            data-task="LAND CLEARING"
+                            data-weight="1"
+                            data-snap="true"
+                            id="landClearingSliderUser2"
+                          />
+                          <div class="slider-track-fill" id="landClearingTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="landClearingSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="land-clearing-progress"
+                        value=""
+                        class="sub-task-hidden"
+                        data-weight="1"
+                        data-task="LAND CLEARING"
+                        id="landClearingInputUser2"
+                      />
+                    </div>
+
+                    <!-- PONDASI dengan slider persentase -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PONDASI</span>
+                        <span class="slider-percent-box" id="pondasiPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value="0"
+                            class="progress-slider sub-task"
+                            data-task="PONDASI"
+                            data-weight="1"
+                            data-snap="true"
+                            id="pondasiSliderUser2"
+                          />
+                          <div class="slider-track-fill" id="pondasiTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="pondasiSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="pondasi-progress"
+                        value=""
+                        class="sub-task-hidden"
+                        data-weight="1"
+                        data-task="PONDASI"
+                        id="pondasiInputUser2"
+                      />
+                    </div>
+
+                    <!-- SLOOF dengan slider persentase -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">SLOOF</span>
+                        <span class="slider-percent-box" id="sloofPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value="0"
+                            class="progress-slider sub-task"
+                            data-task="SLOOF"
+                            data-weight="1"
+                            data-snap="true"
+                            id="sloofSliderUser2"
+                          />
+                          <div class="slider-track-fill" id="sloofTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="sloofSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="sloof-progress"
+                        value=""
+                        class="sub-task-hidden"
+                        data-weight="1"
+                        data-task="SLOOF"
+                        id="sloofInputUser2"
+                      />
+                    </div>
+
+                    <!-- PASANG DINDING S/D CANOPY dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PASANG DINDING S/D CANOPY</span>
+                        <span class="slider-percent-box" id="pasDdgCanopyPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PAS.DDG S/D2 CANOPY" data-weight="1" data-snap="true" id="pasDdgCanopySliderUser2" />
+                          <div class="slider-track-fill" id="pasDdgCanopyTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="pasDdgCanopySliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="pas-ddg-canopy-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PAS.DDG S/D2 CANOPY" id="pasDdgCanopyInputUser2" />
+                    </div>
+
+                    <!-- PASANG DINDING S/D RING BALK dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PASANG DINDING S/D RING BALK</span>
+                        <span class="slider-percent-box" id="pasDdgRingBlkPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PAS.DDG S/D RING BLK" data-weight="1" data-snap="true" id="pasDdgRingBlkSliderUser2" />
+                          <div class="slider-track-fill" id="pasDdgRingBlkTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="pasDdgRingBlkSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="pas-ddg-ringblk-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PAS.DDG S/D RING BLK" id="pasDdgRingBlkInputUser2" />
+                    </div>
+
+                    <!-- CONDUIT+INBOW DOOS dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">CONDUIT+INBOW DOOS</span>
+                        <span class="slider-percent-box" id="conduitPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="CONDUIT+INBOW DOOS" data-weight="1" data-snap="true" id="conduitSliderUser2" />
+                          <div class="slider-track-fill" id="conduitTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="conduitSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="conduit-progress" value="" class="sub-task-hidden" data-weight="1" data-task="CONDUIT+INBOW DOOS" id="conduitInputUser2" />
+                    </div>
+
+                    <!-- PIPA AIR KOTOR dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PIPA AIR KOTOR</span>
+                        <span class="slider-percent-box" id="pipaAirKotorPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PIPA AIR KOTOR" data-weight="1" data-snap="true" id="pipaAirKotorSliderUser2" />
+                          <div class="slider-track-fill" id="pipaAirKotorTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="pipaAirKotorSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="pipa-air-kotor-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PIPA AIR KOTOR" id="pipaAirKotorInputUser2" />
+                    </div>
+
+                    <!-- PIPA AIR BERSIH dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PIPA AIR BERSIH</span>
+                        <span class="slider-percent-box" id="pipaAirBersihPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PIPA AIR BERSIH" data-weight="1" data-snap="true" id="pipaAirBersihSliderUser2" />
+                          <div class="slider-track-fill" id="pipaAirBersihTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="pipaAirBersihSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="pipa-air-bersih-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PIPA AIR BERSIH" id="pipaAirBersihInputUser2" />
+                    </div>
+
+                    <!-- SISTEM PEMBUANGAN (pilihan Biotank/Ipal/Septictank) -->
+                    <div class="task-item-standalone waste-system">
+                      <span class="item-title">SISTEM PEMBUANGAN</span>
+                      <div class="dual-state-buttons">
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="biotank"
+                          data-active="false"
+                        >
+                          Biotank
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="ipal"
+                          data-active="false"
+                        >
+                          Ipal
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn system-btn"
+                          data-state="septictank"
+                          data-active="false"
+                        >
+                          Septictank
+                        </button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="waste-system"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="SISTEM PEMBUANGAN"
+                        id="wasteSystemInputUser2"
+                      />
+                    </div>
+
+                    <!-- PLESTER dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PLESTER</span>
+                        <span class="slider-percent-box" id="plesterPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PLESTER" data-weight="1" data-snap="true" id="plesterSliderUser2" />
+                          <div class="slider-track-fill" id="plesterTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="plesterSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="plester-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PLESTER" id="plesterInputUser2" />
+                    </div>
+
+                    <!-- ACIAN & BENANGAN dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">ACIAN & BENANGAN</span>
+                        <span class="slider-percent-box" id="acianBenPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="ACIAN & BENANGAN" data-weight="1" data-snap="true" id="acianBenSliderUser2" />
+                          <div class="slider-track-fill" id="acianBenTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="acianBenSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="acian-ben-progress" value="" class="sub-task-hidden" data-weight="1" data-task="ACIAN & BENANGAN" id="acianBenInputUser2" />
+                    </div>
+
+                    <!-- COR MEJA DAPUR (pilihan Dengan/Tanpa) -->
+                    <div class="task-item-standalone table-kitchen">
+                      <span class="item-title">COR MEJA DAPUR</span>
+                      <div class="dual-state-buttons">
+                        <button
+                          type="button"
+                          class="state-btn table-btn"
+                          data-state="include"
+                          data-active="false"
+                        >
+                          Dengan COR MEJA DAPUR
+                        </button>
+                        <div class="vertical-divider">|</div>
+                        <button
+                          type="button"
+                          class="state-btn table-btn"
+                          data-state="exclude"
+                          data-active="false"
+                        >
+                          Tanpa COR MEJA DAPUR
+                        </button>
+                      </div>
+                      <input
+                        type="hidden"
+                        name="table-kitchen"
+                        value=""
+                        class="sub-task"
+                        data-weight="1"
+                        data-task="COR MEJA DAPUR"
+                        id="tableKitchenInputUser2"
+                      />
+                    </div>
+
+                  </div>
+                  <button class="btn-save-section" type="button" data-tahap="1">
+                    <i class="fas fa-save"></i> Simpan Tahap 1
+                  </button>
+                </div>
+              </div>
+
+           <!-- TAHAP 2 - USER 2 -->
+              <div id="tab-user2-tahap2" class="tab-content-item">
+                <div class="progress-section detailed" data-tahap="2">
+                  <div class="section-header-flex">
+                    <h3>Tahap 2: Progres Kerja Atap, Dinding & Lantai</h3>
+                    <span class="sub-percent">0%</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill tahap2" style="width: 0%"></div>
+                  </div>
+                  <div class="sub-tasks-grid">
+                    
+                    <!-- RANGKA ATAP dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">RANGKA ATAP</span>
+                        <span class="slider-percent-box" id="rangkaAtapPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="RANGKA ATAP" data-weight="1" data-snap="true" id="rangkaAtapSliderUser2" />
+                          <div class="slider-track-fill" id="rangkaAtapTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="rangkaAtapSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="rangka-atap-progress" value="" class="sub-task-hidden" data-weight="1" data-task="RANGKA ATAP" id="rangkaAtapInputUser2" />
+                    </div>
+
+                    <!-- GENTENG dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">GENTENG</span>
+                        <span class="slider-percent-box" id="gentengPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="GENTENG" data-weight="1" data-snap="true" id="gentengSliderUser2" />
+                          <div class="slider-track-fill" id="gentengTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="gentengSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="genteng-progress" value="" class="sub-task-hidden" data-weight="1" data-task="GENTENG" id="gentengInputUser2" />
+                    </div>
+
+                    <!-- PLAFOND dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">PLAFOND</span>
+                        <span class="slider-percent-box" id="plafondPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PLAFOND" data-weight="1" data-snap="true" id="plafondSliderUser2" />
+                          <div class="slider-track-fill" id="plafondTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="plafondSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="plafond-progress" value="" class="sub-task-hidden" data-weight="1" data-task="PLAFOND" id="plafondInputUser2" />
+                    </div>
+
+                    <!-- KERAMIK DINDING (pilihan Dengan/Tanpa) -->
+                    <div class="task-item-standalone bathroom-tiles">
+                      <span class="item-title">KERAMIK DINDING TOILET & DAPUR</span>
+                      <div class="dual-state-buttons">
+                        <button type="button" class="state-btn tiles-btn" data-state="include" data-active="false">Dengan Keramik Dinding</button>
+                        <div class="vertical-divider">|</div>
+                        <button type="button" class="state-btn tiles-btn" data-state="exclude" data-active="false">Tanpa Keramik Dinding</button>
+                      </div>
+                      <input type="hidden" name="bathroom-tiles" value="" class="sub-task" data-weight="1" data-task="KERAMIK DINDING TOILET & DAPUR" id="bathroomTilesInputUser2" />
+                    </div>
+
+                    <!-- INSTALASI LISTRIK dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">INSTALASI LISTRIK</span>
+                        <span class="slider-percent-box" id="instalasiListrikPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="INSTALASI LISTRIK" data-weight="1" data-snap="true" id="instalasiListrikSliderUser2" />
+                          <div class="slider-track-fill" id="instalasiListrikTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="instalasiListrikSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="instalasi-listrik-progress" value="" class="sub-task-hidden" data-weight="1" data-task="INSTALASI LISTRIK" id="instalasiListrikInputUser2" />
+                    </div>
+
+                    <!-- KERAMIK LANTAI dengan slider -->
+                    <div class="task-item-standalone progress-slider-choice">
+                      <div class="slider-title-row">
+                        <span class="item-title">KERAMIK LANTAI</span>
+                        <span class="slider-percent-box" id="keramikLantaiPercentUser2">0%</span>
+                      </div>
+                      <div class="slider-row-with-check">
+                        <div class="slider-container with-markers">
+                          <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="KERAMIK LANTAI" data-weight="1" data-snap="true" id="keramikLantaiSliderUser2" />
+                          <div class="slider-track-fill" id="keramikLantaiTrackUser2" style="width: 0%"></div>
+                          <div class="slider-snap-markers">
+                            <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+                            <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+                            <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+                            <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+                          </div>
+                        </div>
+                        <label class="slider-check-100" title="Set ke 100%">
+                          <input type="checkbox" class="check-100" data-slider="keramikLantaiSliderUser2" />
+                          <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+                        </label>
+                      </div>
+                      <input type="hidden" name="keramik-lantai-progress" value="" class="sub-task-hidden" data-weight="1" data-task="KERAMIK LANTAI" id="keramikLantaiInputUser2" />
+                    </div>
+
+                  </div>
+                  <button class="btn-save-section" type="button" data-tahap="2">
+                    <i class="fas fa-save"></i> Simpan Tahap 2
+                  </button>
+                </div>
+              </div>
+
+            <!-- TAHAP 3 - USER 2 dengan SLIDER -->
+<div id="tab-user2-tahap3" class="tab-content-item">
+  <div class="progress-section detailed" data-tahap="3">
+    <div class="section-header-flex">
+      <h3>Tahap 3: Progres Kerja Pemasangan Fasilitas</h3>
+      <span class="sub-percent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill tahap3" style="width: 0%"></div>
+    </div>
+    <div class="sub-tasks-grid">
+      
+      <!-- KUSEN PINTU & JENDELA dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">KUSEN PINTU & JENDELA</span>
+          <span class="slider-percent-box" id="kusenPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="KUSEN PINTU & JENDELA" data-weight="1" data-snap="true" id="kusenSliderUser2" />
+            <div class="slider-track-fill" id="kusenTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="kusenSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="KUSEN PINTU & JENDELA" id="kusenInputUser2" />
+      </div>
+
+      <!-- DAUN PINTU & JENDELA dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">DAUN PINTU & JENDELA</span>
+          <span class="slider-percent-box" id="daunPintuPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="DAUN PINTU & JENDELA" data-weight="1" data-snap="true" id="daunPintuSliderUser2" />
+            <div class="slider-track-fill" id="daunPintuTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="daunPintuSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="DAUN PINTU & JENDELA" id="daunPintuInputUser2" />
+      </div>
+
+      <!-- CAT DASAR + LAPIS AWAL dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">CAT DASAR + LAPIS AWAL</span>
+          <span class="slider-percent-box" id="catDasarPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="CAT DASAR + LAPIS AWAL" data-weight="1" data-snap="true" id="catDasarSliderUser2" />
+            <div class="slider-track-fill" id="catDasarTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="catDasarSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="CAT DASAR + LAPIS AWAL" id="catDasarInputUser2" />
+      </div>
+
+      <!-- FITTING LAMPU dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">FITTING LAMPU</span>
+          <span class="slider-percent-box" id="fittingLampuPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="FITTING LAMPU" data-weight="1" data-snap="true" id="fittingLampuSliderUser2" />
+            <div class="slider-track-fill" id="fittingLampuTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="fittingLampuSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="FITTING LAMPU" id="fittingLampuInputUser2" />
+      </div>
+
+      <!-- FIXTURE & SANITER dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">FIXTURE & SANITER</span>
+          <span class="slider-percent-box" id="fixtureSaniterPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="FIXTURE & SANITER" data-weight="1" data-snap="true" id="fixtureSaniterSliderUser2" />
+            <div class="slider-track-fill" id="fixtureSaniterTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="fixtureSaniterSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="FIXTURE & SANITER" id="fixtureSaniterInputUser2" />
+      </div>
+
+      <!-- CAT FINISH INTERIOR dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">CAT FINISH INTERIOR</span>
+          <span class="slider-percent-box" id="catInteriorPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="CAT FINISH INTERIOR" data-weight="1" data-snap="true" id="catInteriorSliderUser2" />
+            <div class="slider-track-fill" id="catInteriorTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="catInteriorSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="CAT FINISH INTERIOR" id="catInteriorInputUser2" />
+      </div>
+
+      <!-- CAT FINISH EXTERIOR dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">CAT FINISH EXTERIOR</span>
+          <span class="slider-percent-box" id="catExteriorPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="CAT FINISH EXTERIOR" data-weight="1" data-snap="true" id="catExteriorSliderUser2" />
+            <div class="slider-track-fill" id="catExteriorTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="catExteriorSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="CAT FINISH EXTERIOR" id="catExteriorInputUser2" />
+      </div>
+
+      <!-- BAK KONTROL & BATAS CARPORT dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">BAK KONTROL & BATAS CARPORT</span>
+          <span class="slider-percent-box" id="bakKontrolPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="BAK KONTROL & BATAS CARPORT" data-weight="1" data-snap="true" id="bakKontrolSliderUser2" />
+            <div class="slider-track-fill" id="bakKontrolTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="bakKontrolSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="BAK KONTROL & BATAS CARPORT" id="bakKontrolInputUser2" />
+      </div>
+
+      <!-- PAVING HALAMAN / CARPOT dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">PAVING HALAMAN / CARPOT</span>
+          <span class="slider-percent-box" id="pavingHalamanPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="PAVING HALAMAN" data-weight="1" data-snap="true" id="pavingHalamanSliderUser2" />
+            <div class="slider-track-fill" id="pavingHalamanTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="pavingHalamanSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="PAVING HALAMAN" id="pavingHalamanInputUser2" />
+      </div>
+
+      <!-- METERAN LISTRIK dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">METERAN LISTRIK</span>
+          <span class="slider-percent-box" id="meteranListrikPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="METERAN LISTRIK" data-weight="1" data-snap="true" id="meteranListrikSliderUser2" />
+            <div class="slider-track-fill" id="meteranListrikTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="meteranListrikSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="METERAN LISTRIK" id="meteranListrikInputUser2" />
+      </div>
+
+      <!-- METERAN PDAM dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">METERAN AIR (PDAM)</span>
+          <span class="slider-percent-box" id="meteranAirPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="METERAN AIR" data-weight="1" data-snap="true" id="meteranAirSliderUser2" />
+            <div class="slider-track-fill" id="meteranAirTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="meteranAirSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="METERAN AIR" id="meteranAirInputUser2" />
+      </div>
+
+      <!-- KONEKTING PIPA AIR BERSIH dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">KONEKTING AIR BERSIH</span>
+          <span class="slider-percent-box" id="konektingBersihPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="Konekting Air Bersih" data-weight="1" data-snap="true" id="konektingBersihSliderUser2" />
+            <div class="slider-track-fill" id="konektingBersihTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="konektingBersihSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="Konekting Air Bersih" id="konektingBersihInputUser2" />
+      </div>
+
+    </div>
+    <button class="btn-save-section" type="button" data-tahap="3">
+      <i class="fas fa-save"></i> Simpan Tahap 3
+    </button>
+  </div>
+</div>
+
+
+        <!-- TAHAP 4 - USER 2 dengan SLIDER -->
+<div id="tab-user2-tahap4" class="tab-content-item">
+  <div class="progress-section detailed" data-tahap="4">
+    <div class="section-header-flex">
+      <h3>Tahap 4: Progres Kerja Interior & Exterior</h3>
+      <span class="sub-percent">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill tahap4" style="width: 0%"></div>
+    </div>
+    <div class="sub-tasks-grid">
+      
+      <!-- KONEKTING PIPA AIR KOTOR dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">KONEKTING AIR KOTOR</span>
+          <span class="slider-percent-box" id="konektingKotorPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="Konekting Air Kotor" data-weight="1" data-snap="true" id="konektingKotorSliderUser2" />
+            <div class="slider-track-fill" id="konektingKotorTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="konektingKotorSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="Konekting Air Kotor" id="konektingKotorInputUser2" />
+      </div>
+
+      <!-- GORONG-GORONG dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">GORONG-GORONG</span>
+          <span class="slider-percent-box" id="gorongGorongPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="Gorong-gorong" data-weight="1" data-snap="true" id="gorongGorongSliderUser2" />
+            <div class="slider-track-fill" id="gorongGorongTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="gorongGorongSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="Gorong-gorong" id="gorongGorongInputUser2" />
+      </div>
+
+      <!-- AKSES JALAN dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">AKSES JALAN</span>
+          <span class="slider-percent-box" id="aksesJalanPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="Akses Jalan" data-weight="1" data-snap="true" id="aksesJalanSliderUser2" />
+            <div class="slider-track-fill" id="aksesJalanTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="aksesJalanSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="Akses Jalan" id="aksesJalanInputUser2" />
+      </div>
+
+      <!-- GENERAL CLEANING dengan slider -->
+      <div class="task-item-standalone progress-slider-choice">
+        <div class="slider-title-row">
+          <span class="item-title">GENERAL CLEANING</span>
+          <span class="slider-percent-box" id="generalCleaningPercentUser2">0%</span>
+        </div>
+        <div class="slider-row-with-check">
+          <div class="slider-container with-markers">
+            <input type="range" min="0" max="100" value="0" class="progress-slider sub-task" data-task="GENERAL CLEANING" data-weight="1" data-snap="true" id="generalCleaningSliderUser2" />
+            <div class="slider-track-fill" id="generalCleaningTrackUser2" style="width: 0%"></div>
+            <div class="slider-snap-markers">
+              <span class="snap-marker" data-value="30" style="left: 30%">30%</span>
+              <span class="snap-marker" data-value="50" style="left: 50%">50%</span>
+              <span class="snap-marker" data-value="70" style="left: 70%">70%</span>
+              <span class="snap-marker" data-value="100" style="left: 100%">100%</span>
+            </div>
+          </div>
+          <label class="slider-check-100" title="Set ke 100%">
+            <input type="checkbox" class="check-100" data-slider="generalCleaningSliderUser2" />
+            <span class="checkmark-icon"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+        <input type="hidden" value="" class="sub-task-hidden" data-weight="1" data-task="GENERAL CLEANING" id="generalCleaningInputUser2" />
+      </div>
+
+    </div>
+
+    <!-- Catatan Keterangan -->
+    <div style="margin-top: 20px;">
+      <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+        <i class="fas fa-sticky-note"></i> Keterangan
+      </label>
+      <textarea
+        id="keteranganTahap4User2"
+        style="width: 100%; height: 100px; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem; resize: vertical;"
+        placeholder="Masukkan keterangan tambahan di sini..."
+      ></textarea>
+    </div>
+
+    <!-- Info Pengembalian Kunci -->
+    <div style="margin-top: 20px; padding: 15px; background: rgba(56, 189, 248, 0.1); border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.3);">
+      <h4 style="margin-bottom: 12px; color: #38bdf8;">
+        <i class="fas fa-key"></i> Pengembalian Kunci Setelah Pembangunan
+      </h4>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+          Diberikan Kepada Siapa?
+        </label>
+        <input
+          type="text"
+          id="keyReturnRecipientUser2"
+          placeholder="Nama penerima kunci"
+          style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;"
+        />
+      </div>
+
+      <div>
+        <label style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">
+          Tanggal Pengembalian Kunci
+        </label>
+        <input
+          type="date"
+          id="keyReturnDateUser2"
+          style="width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; color: white; border: 2px solid #334155; font-size: 1rem;"
+        />
+      </div>
+    </div>
+
+    <button class="btn-save-section" type="button" data-tahap="4">
+      <i class="fas fa-save"></i> Simpan Tahap 4
+    </button>
+  </div>
+</div>
+
+     <!-- PAGE: user3 - Disederhanakan hanya untuk dashboard informasi -->
+<div class="page-content user3-page" id="user3Page" aria-hidden="true">
+  <div class="page-header">
+    <div class="page-title">
+      <i class="fas fa-hard-hat"></i>
+      <h2 id="user3Title">Dashboard Pelaksana 3</h2>
+    </div>
+    <div class="dashboard-buttons-grid">
+      <button class="logout-btn combined-btn" type="button">
+        <i class="fas fa-sign-out-alt"></i> Kembali ke Menu Awal & Logout
+      </button>
+      <button class="sync-btn combined-btn" type="button">
+        <i class="fas fa-sync-alt"></i> Sinkronkan Data
+      </button>
+    </div>
+  </div>
+
+  <div class="page-layout">
+    <div class="sidebar-kavling">
+      <div class="search-section">
+        <div class="search-box">
+          <div class="custom-search-container">
+            <input
+              type="text"
+              id="searchKavlingUser3Input"
+              class="search-input-custom"
+              placeholder="Cari Kavling..."
+              autocomplete="off"
+            />
+            <div
+              id="searchKavlingUser3List"
+              class="custom-dropdown-list"
+              style="display: none"
+            ></div>
+            <select id="searchKavlingUser3" style="display: none">
+              <option value="">-- Pilih Kavling --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kavling-info-display" id="kavlingInfoUser3">
+          <div class="info-item">
+            <span class="info-label">Blok/Kavling:</span>
+            <span class="info-value val-name">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Type:</span>
+            <span class="info-value val-type">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Luas Tanah (LT):</span>
+            <span class="info-value val-lt">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Luas Bangunan (LB):</span>
+            <span class="info-value val-lb">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tanggal HandOver Kunci ke User:</span>
+            <span class="info-value val-HOuser">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="overall-rekap">
+        <div class="rekap-header">
+          <h3>Keseluruhan Progres Proyek</h3>
+          <span class="total-percent" aria-live="polite">0%</span>
+        </div>
+        <div class="progress-bar main">
+          <div class="progress-fill total-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Informasi Tambahan -->
+      <div class="info-card" style="
+        background: rgba(139, 92, 246, 0.1);
+        border: 2px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+      ">
+        <h3 style="color: #8b5cf6; margin-bottom: 15px;">
+          <i class="fas fa-info-circle"></i> Informasi
+        </h3>
+        <p style="color: #94a3b8; line-height: 1.6; margin-bottom: 10px;">
+          Dashboard ini hanya menampilkan informasi dasar kavling. Untuk detail progres pembangunan, silakan hubungi supervisor.
+        </p>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <div style="flex: 1; text-align: center; padding: 10px; background: rgba(139, 92, 246, 0.2); border-radius: 8px;">
+            <div style="font-size: 0.9rem; color: #94a3b8;">Status</div>
+            <div id="statusInfoUser3" style="font-weight: 700; color: #8b5cf6; font-size: 1.1rem;">-</div>
+          </div>
+          <div style="flex: 1; text-align: center; padding: 10px; background: rgba(139, 92, 246, 0.2); border-radius: 8px;">
+            <div style="font-size: 0.9rem; color: #94a3b8;">Terakhir Update</div>
+            <div id="lastUpdateUser3" style="font-weight: 700; color: #8b5cf6; font-size: 1.1rem;">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- PAGE: user4 (ADMIN UTILITAS) -->
+      <div class="page-content user4-page" id="user4Page" aria-hidden="true">
+        <div class="page-header">
+          <div class="page-title">
+            <i class="fas fa-key"></i>
+            <h2 id="user4Title">Admin Utilitas</h2>
+          </div>
+          <div style="display: flex; gap: 15px; align-items: center">
+            <button class="logout-btn combined-btn" type="button">
+              <i class="fas fa-sign-out-alt"></i> Kembali ke Menu Awal & Logout
+            </button>
+            <button class="sync-btn combined-btn" type="button">
+              <i class="fas fa-sync-alt"></i> Sinkronkan Data
+            </button>
+          </div>
+        </div>
+
+        <div class="page-layout">
+          <div class="sidebar-kavling">
+            <div class="search-section">
+              <div class="search-box">
+                <div class="custom-search-container">
+                  <input
+                    type="text"
+                    id="searchKavlingUser4Input"
+                    class="search-input-custom"
+                    placeholder="Cari Kavling..."
+                    autocomplete="off"
+                  />
+                  <div
+                    id="searchKavlingUser4List"
+                    class="custom-dropdown-list"
+                    style="display: none"
+                  ></div>
+                  <select id="searchKavlingUser4" style="display: none">
+                    <option value="">-- Pilih Kavling --</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="kavling-info-display" id="kavlingInfoUser4">
+                <div class="info-item">
+                  <span class="info-label">Blok/Kavling:</span>
+                  <span class="info-value val-name">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Type:</span>
+                  <span class="info-value val-type">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Tanah (LT):</span>
+                  <span class="info-value val-lt">-</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Luas Bangunan (LB):</span>
+                  <span class="info-value val-lb">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-body">
+            <!-- Tombol Lihat Data Mutasi -->
+            <div style="margin-bottom: 20px">
+              <button
+                id="btnViewMutationHistory"
+                type="button"
+                class="btn-primary"
+                style="
+                  width: 100%;
+                  padding: 15px;
+                  background: linear-gradient(135deg, #38bdf8, #1d4ed8);
+                  border-radius: 12px;
+                  font-weight: 700;
+                  font-size: 1rem;
+                  border: none;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 10px;
+                  box-shadow:
+                    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                  transition: all 0.3s ease;
+                "
+              >
+                <i class="fas fa-history"></i> Lihat Data Mutasi
+              </button>
+            </div>
+
+            <!-- Admin Utilitas Tabs -->
+            <div class="admin-tabs">
+              <button class="admin-tab-btn active" data-tab="kunci-masuk">
+                <i class="fas fa-sign-in-alt"></i> Mutasi Kunci Masuk
+              </button>
+              <button class="admin-tab-btn" data-tab="kunci-keluar">
+                <i class="fas fa-sign-out-alt"></i> Mutasi Kunci Keluar
+              </button>
+              <button class="admin-tab-btn" data-tab="ho-user">
+                <i class="fas fa-user-check"></i> Mutasi HO Ke User
+              </button>
+              <button class="admin-tab-btn" data-tab="utility-install">
+                <i class="fas fa-bolt"></i> Pemasangan Listrik & Air
+              </button>
+            </div>
+
+            <div class="tab-content">
+              <!-- Mutasi Kunci Masuk -->
+              <div id="tab-kunci-masuk" class="tab-content-item active">
+                <div
+                  class="progress-section detailed"
+                  style="border-left: 6px solid #10b981"
+                >
+                  <h3 style="color: #10b981; margin-bottom: 15px">
+                    <i class="fas fa-sign-in-alt"></i> Mutasi Kunci Masuk
+                  </h3>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diberikan Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-masuk-dari"
+                      placeholder="Nama Pemberi"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diterima Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-masuk-ke"
+                      placeholder="Nama Penerima"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Tanggal:</label
+                    >
+                    <div style="display: flex; gap: 10px">
+                      <input
+                        type="text"
+                        class="input-mutasi-masuk-tgl"
+                        placeholder="dd/mm/yyyy"
+                        maxlength="10"
+                        style="
+                          flex: 1;
+                          padding: 12px;
+                          border-radius: 8px;
+                          background: #0f172a;
+                          border: 1px solid #334155;
+                          color: white;
+                        "
+                      />
+                      <button
+                        type="button"
+                        class="btn-today-admin"
+                        style="
+                          background: #38bdf8;
+                          color: white;
+                          border: none;
+                          padding: 0 15px;
+                          border-radius: 8px;
+                          cursor: pointer;
+                        "
+                      >
+                        Hari Ini
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="form-group"
+                    style="
+                      margin-bottom: 15px;
+                      padding: 12px;
+                      background: rgba(56, 189, 248, 0.1);
+                      border-radius: 8px;
+                      border: 1px solid rgba(56, 189, 248, 0.3);
+                    "
+                  >
+                    <label
+                      style="
+                        display: block;
+                        margin-bottom: 5px;
+                        color: #38bdf8;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                      "
+                      >Data Mutasi Sebelumnya:</label
+                    >
+                    <div
+                      class="prev-mutasi-masuk-info"
+                      style="
+                        color: #94a3b8;
+                        font-size: 0.9rem;
+                        min-height: 20px;
+                      "
+                    >
+                      Belum ada data sebelumnya
+                    </div>
+                  </div>
+                  <button
+                    class="btn-save-section"
+                    type="button"
+                    style="
+                      background: linear-gradient(135deg, #10b981, #059669);
+                    "
+                  >
+                    <i class="fas fa-save"></i> Simpan Mutasi Masuk
+                  </button>
+                </div>
+              </div>
+
+              <!-- Mutasi Kunci Keluar -->
+              <div id="tab-kunci-keluar" class="tab-content-item">
+                <div
+                  class="progress-section detailed"
+                  style="border-left: 6px solid #f43f5e"
+                >
+                  <h3 style="color: #f43f5e; margin-bottom: 15px">
+                    <i class="fas fa-sign-out-alt"></i> Mutasi Kunci Keluar
+                  </h3>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diberikan Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-keluar-dari"
+                      placeholder="Nama Pemberi"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diterima Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-keluar-ke"
+                      placeholder="Nama Penerima"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Tanggal:</label
+                    >
+                    <div style="display: flex; gap: 10px">
+                      <input
+                        type="text"
+                        class="input-mutasi-keluar-tgl"
+                        placeholder="dd/mm/yyyy"
+                        maxlength="10"
+                        style="
+                          flex: 1;
+                          padding: 12px;
+                          border-radius: 8px;
+                          background: #0f172a;
+                          border: 1px solid #334155;
+                          color: white;
+                        "
+                      />
+                      <button
+                        type="button"
+                        class="btn-today-admin"
+                        style="
+                          background: #38bdf8;
+                          color: white;
+                          border: none;
+                          padding: 0 15px;
+                          border-radius: 8px;
+                          cursor: pointer;
+                        "
+                      >
+                        Hari Ini
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="form-group"
+                    style="
+                      margin-bottom: 15px;
+                      padding: 12px;
+                      background: rgba(244, 63, 94, 0.1);
+                      border-radius: 8px;
+                      border: 1px solid rgba(244, 63, 94, 0.3);
+                    "
+                  >
+                    <label
+                      style="
+                        display: block;
+                        margin-bottom: 5px;
+                        color: #f43f5e;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                      "
+                      >Data Mutasi Sebelumnya:</label
+                    >
+                    <div
+                      class="prev-mutasi-keluar-info"
+                      style="
+                        color: #94a3b8;
+                        font-size: 0.9rem;
+                        min-height: 20px;
+                      "
+                    >
+                      Belum ada data sebelumnya
+                    </div>
+                  </div>
+                  <button
+                    class="btn-save-section"
+                    type="button"
+                    style="
+                      background: linear-gradient(135deg, #f43f5e, #e11d48);
+                    "
+                  >
+                    <i class="fas fa-save"></i> Simpan Mutasi Keluar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Mutasi HO Ke User -->
+              <div id="tab-ho-user" class="tab-content-item">
+                <div
+                  class="progress-section detailed"
+                  style="border-left: 6px solid #8b5cf6"
+                >
+                  <h3 style="color: #8b5cf6; margin-bottom: 15px">
+                    <i class="fas fa-user-check"></i> Mutasi HO Ke User
+                  </h3>
+                  <div
+                    id="ho-edit-container"
+                    style="display: none; margin-bottom: 15px"
+                  >
+                    <button
+                      id="btn-edit-ho"
+                      type="button"
+                      class="btn-primary"
+                      style="
+                        background: #8b5cf6;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        border: none;
+                        cursor: pointer;
+                      "
+                    >
+                      <i class="fas fa-edit"></i> EDIT MUTASI HO
+                    </button>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diberikan Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-ho-dari"
+                      placeholder="Nama Pemberi"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Diterima Oleh:</label
+                    >
+                    <input
+                      type="text"
+                      class="input-mutasi-ho-ke"
+                      placeholder="Nama Penerima"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        border-radius: 8px;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        color: white;
+                      "
+                    />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 15px">
+                    <label
+                      style="display: block; margin-bottom: 8px; color: #94a3b8"
+                      >Tanggal:</label
+                    >
+                    <div style="display: flex; gap: 10px">
+                      <input
+                        type="text"
+                        class="input-mutasi-ho-tgl"
+                        placeholder="dd/mm/yyyy"
+                        maxlength="10"
+                        style="
+                          flex: 1;
+                          padding: 12px;
+                          border-radius: 8px;
+                          background: #0f172a;
+                          border: 1px solid #334155;
+                          color: white;
+                        "
+                      />
+                      <button
+                        type="button"
+                        class="btn-today-admin"
+                        style="
+                          background: #38bdf8;
+                          color: white;
+                          border: none;
+                          padding: 0 15px;
+                          border-radius: 8px;
+                          cursor: pointer;
+                        "
+                      >
+                        Hari Ini
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    class="btn-save-section"
+                    type="button"
+                    style="
+                      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                    "
+                  >
+                    <i class="fas fa-save"></i> Simpan Mutasi HO
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tab Pemasangan Listrik & Air -->
+              <div id="tab-utility-install" class="tab-content-item">
+                <div
+                  class="progress-section detailed"
+                  style="border-left: 6px solid #f59e0b"
+                >
+                  <h3 style="color: #f59e0b; margin-bottom: 15px">
+                    <i class="fas fa-bolt"></i> Pemasangan Utilitas
+                  </h3>
+
+                  <div
+                    id="utility-edit-container"
+                    style="display: none; margin-bottom: 15px"
+                  >
+                    <button
+                      id="btn-edit-utility"
+                      type="button"
+                      class="btn-primary"
+                      style="
+                        background: #f59e0b;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        border: none;
+                        cursor: pointer;
+                      "
+                    >
+                      <i class="fas fa-edit"></i> EDIT PEMASANGAN LISTRIK & AIR
+                    </button>
+                  </div>
+
+                  <div
+                    class="task-item"
+                    style="
+                      flex-direction: column;
+                      align-items: flex-start;
+                      gap: 10px;
+                      margin-bottom: 15px;
+                    "
+                  >
+                    <label
+                      for="listrikInstallDate"
+                      style="font-weight: 600; color: #94a3b8"
+                      >Tanggal Pemasangan Listrik:</label
+                    >
+                    <div style="display: flex; gap: 10px; width: 100%">
+                      <input
+                        type="text"
+                        id="listrikInstallDate"
+                        class="utility-date-input"
+                        placeholder="dd/mm/yyyy"
+                        maxlength="10"
+                        style="
+                          flex: 1;
+                          padding: 12px;
+                          border-radius: 8px;
+                          background: #0f172a;
+                          color: white;
+                          border: 1px solid #334155;
+                        "
+                      />
+                      <button
+                        type="button"
+                        class="btn-today-admin"
+                        style="
+                          background: #f59e0b;
+                          color: white;
+                          border: none;
+                          padding: 0 15px;
+                          border-radius: 8px;
+                          cursor: pointer;
+                        "
+                      >
+                        Hari Ini
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    class="task-item"
+                    style="
+                      flex-direction: column;
+                      align-items: flex-start;
+                      gap: 10px;
+                      margin-bottom: 20px;
+                    "
+                  >
+                    <label
+                      for="airInstallDate"
+                      style="font-weight: 600; color: #94a3b8"
+                      >Tanggal Pemasangan Air:</label
+                    >
+                    <div style="display: flex; gap: 10px; width: 100%">
+                      <input
+                        type="text"
+                        id="airInstallDate"
+                        class="utility-date-input"
+                        placeholder="dd/mm/yyyy"
+                        maxlength="10"
+                        style="
+                          flex: 1;
+                          padding: 12px;
+                          border-radius: 8px;
+                          background: #0f172a;
+                          color: white;
+                          border: 1px solid #334155;
+                        "
+                      />
+                      <button
+                        type="button"
+                        class="btn-today-admin"
+                        style="
+                          background: #f59e0b;
+                          color: white;
+                          border: none;
+                          padding: 0 15px;
+                          border-radius: 8px;
+                          cursor: pointer;
+                        "
+                      >
+                        Hari Ini
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    class="btn-save-section"
+                    id="btnSaveUtility"
+                    type="button"
+                    style="
+                      background: linear-gradient(135deg, #f59e0b, #d97706);
+                    "
+                  >
+                    <i class="fas fa-save"></i> Simpan Data Utilitas
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: manager -->
+      <div
+        class="page-content manager-page"
+        id="managerPage"
+        aria-hidden="true"
+      >
+        <div class="page-header">
+          <div class="page-title">
+            <i class="fas fa-user-tie"></i>
+            <h2 id="managerTitle">Dashboard Supervisor</h2>
+          </div>
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              flex-wrap: wrap;
+            "
+          >
+            <button class="logout-btn combined-btn" type="button">
+              <i class="fas fa-sign-out-alt"></i> Kembali Ke Menu Awal & Logout
+            </button>
+            <button class="btn-add-kavling" type="button">
+              <i class="fas fa-plus-circle"></i> Tambah Kavling
+            </button>
+            <button class="btn-edit-kavling" type="button">
+              <i class="fas fa-edit"></i> Edit Kavling
+            </button>
+            <button class="sync-btn combined-btn" type="button">
+              <i class="fas fa-sync-alt"></i> Sinkronkan
+            </button>
+          </div>
+        </div>
+
+        <div class="page-layout">
+          <div class="page-body">
+            <!-- Manager Tabs -->
+            <div class="admin-tabs">
+              <button class="admin-tab-btn active" data-tab="notes">
+                <i class="fas fa-sticky-note"></i> Catatan Kondisi Property
+              </button>
+              <button class="admin-tab-btn" data-tab="reports">
+                <i class="fas fa-chart-bar"></i> Laporan
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+              <div id="tab-notes" class="tab-content-item active">
+                <div class="sidebar-kavling">
+                  <div class="search-section">
+                    <div class="search-box">
+                      <div class="custom-search-container">
+                        <input
+                          type="text"
+                          id="searchKavlingManagerInput"
+                          class="search-input-custom"
+                          placeholder="Cari Kavling..."
+                          autocomplete="off"
+                        />
+                        <div
+                          id="searchKavlingManagerList"
+                          class="custom-dropdown-list"
+                          style="display: none"
+                        ></div>
+                        <select id="searchKavlingManager" style="display: none">
+                          <option value="">-- Pilih Kavling --</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="kavling-info-display" id="kavlingInfoManager">
+                      <div class="info-item">
+                        <span class="info-label">Blok/Kavling:</span>
+                        <span class="info-value val-name">-</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Type:</span>
+                        <span class="info-value val-type">-</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Luas Tanah (LT):</span>
+                        <span class="info-value val-lt">-</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Luas Bangunan (LB):</span>
+                        <span class="info-value val-lb">-</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Tanggal HO Ke User:</span>
+                        <span class="info-value val-ho-date" id="managerHODate"
+                          >-</span
+                        >
+                      </div>
+
+                      <!-- Tombol Export -->
+                      <div
+                        class="export-buttons"
+                        style="
+                          display: flex;
+                          gap: 10px;
+                          margin-top: 15px;
+                          padding-top: 15px;
+                          border-top: 1px solid rgba(255, 255, 255, 0.1);
+                        "
+                      >
+                        <button
+                          id="btnShowMutationSupervisor"
+                          class="btn-export"
+                          style="background: #8b5cf6; flex: 2; padding: 10px; border-radius: 8px; color: white; cursor: pointer;"
+                        >
+                          <i class="fas fa-history"></i> Mutasi HO
+                        </button>
+                        <button
+                          class="btn-export excel"
+                          onclick="showToast('info', 'Mengekspor ke Excel...')"
+                        >
+                          <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                        <button
+                          class="btn-export pdf"
+                          onclick="showToast('info', 'Mengekspor ke PDF...')"
+                        >
+                          <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      id="managerProgressDisplay"
+                      style="
+                        margin-bottom: 20px;
+                        padding: 15px;
+                        background: rgba(0, 0, 0, 0.2);
+                        border-radius: 12px;
+                        display: block;
+                      "
+                    >
+                      <div class="info-item" style="margin-bottom: 10px">
+                        <span class="info-label">Progres Keseluruhan:</span>
+                        <span
+                          id="managerOverallPercent"
+                          class="info-value val-overall"
+                          style="font-size: 1.2rem"
+                          >0%</span
+                        >
+                      </div>
+                      <div class="progress-bar main">
+                        <div
+                          id="managerOverallBar"
+                          class="progress-fill total-bar"
+                          style="width: 0%"
+                        ></div>
+                      </div>
+                      
+                      <!-- New Stage Progress Grid -->
+                      <div class="supervisor-stages-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px;">
+                        <!-- Tahap 1 -->
+                        <div class="stage-card" style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">TAHAP 1</span>
+                            <span id="supervisorTahap1Percent" style="font-size: 0.85rem; color: #38bdf8; font-weight: 700;">0%</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="checkTahap1" class="supervisor-stage-check" data-tahap="1" style="width: 18px; height: 18px; accent-color: #38bdf8; cursor: default;" disabled>
+                            <label for="checkTahap1" style="font-size: 0.8rem; color: #f1f5f9; cursor: default;">Struktur & Infrastruktur</label>
+                          </div>
+                          <!-- Sub-tasks Grid Tahap 1 -->
+                          <div class="supervisor-subtask-grid" id="gridTahap1" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <!-- Will be populated by JS -->
+                          </div>
+                        </div>
+                        <!-- Tahap 2 -->
+                        <div class="stage-card" style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">TAHAP 2</span>
+                            <span id="supervisorTahap2Percent" style="font-size: 0.85rem; color: #10b981; font-weight: 700;">0%</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="checkTahap2" class="supervisor-stage-check" data-tahap="2" style="width: 18px; height: 18px; accent-color: #10b981; cursor: default;" disabled>
+                            <label for="checkTahap2" style="font-size: 0.8rem; color: #f1f5f9; cursor: default;">Atap, Dinding & Lantai</label>
+                          </div>
+                          <!-- Sub-tasks Grid Tahap 2 -->
+                          <div class="supervisor-subtask-grid" id="gridTahap2" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <!-- Will be populated by JS -->
+                          </div>
+                        </div>
+                        <!-- Tahap 3 -->
+                        <div class="stage-card" style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.2);">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">TAHAP 3</span>
+                            <span id="supervisorTahap3Percent" style="font-size: 0.85rem; color: #fbbf24; font-weight: 700;">0%</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="checkTahap3" class="supervisor-stage-check" data-tahap="3" style="width: 18px; height: 18px; accent-color: #fbbf24; cursor: default;" disabled>
+                            <label for="checkTahap3" style="font-size: 0.8rem; color: #f1f5f9; cursor: default;">Finishing & HO</label>
+                          </div>
+                          <!-- Sub-tasks Grid Tahap 3 -->
+                          <div class="supervisor-subtask-grid" id="gridTahap3" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <!-- Will be populated by JS -->
+                          </div>
+                        </div>
+                        <!-- Tahap 4 -->
+                        <div class="stage-card" style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px; border: 1px solid rgba(129, 140, 248, 0.2);">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">TAHAP 4</span>
+                            <span id="supervisorTahap4Percent" style="font-size: 0.85rem; color: #818cf8; font-weight: 700;">0%</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="checkTahap4" class="supervisor-stage-check" data-tahap="4" style="width: 18px; height: 18px; accent-color: #818cf8; cursor: default;" disabled>
+                            <label for="checkTahap4" style="font-size: 0.8rem; color: #f1f5f9; cursor: default;">Kondisi Akhir</label>
+                          </div>
+                          <!-- Sub-tasks Grid Tahap 4 -->
+                          <div class="supervisor-subtask-grid" id="gridTahap4" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <!-- Will be populated by JS -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Container untuk History Mutasi Supervisor (auto load 3 detik setelah pilih kavling) -->
+                    <div id="mutasiHistoryContainerSupervisor" style="display: none; margin-bottom: 20px;"></div>
+
+                    <div style="margin-bottom: 20px;">
+                        <button id="btnShowMutationSupervisor" class="combined-btn" style="background: #8b5cf6; width: 100%; padding: 12px; border-radius: 12px; font-weight: 600;">
+                            <i class="fas fa-history"></i> Mutasi HO
+                        </button>
+                    </div>
+
+                    <div class="notes-section" style="margin-top: 20px">
+                      <h3 style="margin-bottom: 10px; color: #38bdf8">
+                        Catatan Kondisi Property
+                      </h3>
+                      <textarea
+                        id="propertyNotesManager"
+                        style="
+                          width: 100%;
+                          height: 150px;
+                          padding: 15px;
+                          border-radius: 12px;
+                          background: #0f172a;
+                          color: white;
+                          border: 2px solid #334155;
+                          font-size: 1rem;
+                          resize: none;
+                        "
+                        placeholder="Masukkan catatan kondisi property di sini..."
+                      ></textarea>
+                      <div class="photo-upload-section" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <h3 style="margin-bottom: 15px; color: #38bdf8">Foto Catatan Revisi</h3>
+                        <div class="upload-controls" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                          <input type="file" id="revisionPhotoInput" accept="image/*" style="display: none;" onchange="handleRevisionPhotoSelect(this)">
+                          <button type="button" class="combined-btn" style="background: #334155; flex: 1;" onclick="document.getElementById('revisionPhotoInput').click()">
+                            <i class="fas fa-camera"></i> Pilih Foto
+                          </button>
+                          <button type="button" id="btnCancelRevision" class="combined-btn" style="background: #f43f5e; flex: 1; display: none;" onclick="cancelRevisionPhoto()">
+                            <i class="fas fa-times"></i> Batal
+                          </button>
+                        </div>
+                        
+                        <div id="revisionPhotoPreview" style="width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; border: 2px solid #334155;">
+                          <img id="imgPreviewRevision" src="" style="width: 100%; height: auto; display: block;">
+                        </div>
+
+                        <button
+                          id="btnSavePropertyData"
+                          class="btn-save-section"
+                          type="button"
+                          style="margin-top: 10px; background: linear-gradient(135deg, #0ea5e9, #2563eb);"
+                          onclick="savePropertyDataManager()"
+                        >
+                          <i class="fas fa-save"></i> Simpan Catatan & Foto
+                        </button>
+
+                        <div id="revisionPhotoGallery" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px;">
+                          <!-- Uploaded photos will appear here -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="tab-reports" class="tab-content-item">
+                <div id="summaryReportContainer">
+                  <div
+                    class="loading-placeholder"
+                    style="text-align: center; padding: 40px; color: #94a3b8"
+                  >
+                    <i
+                      class="fas fa-chart-bar"
+                      style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5"
+                    ></i>
+                    <div>Loading laporan summary...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: admin -->
+      <div class="page-content admin-page" id="adminPage" aria-hidden="true">
+        <div class="page-header">
+          <div class="page-title">
+            <i class="fas fa-user-secret"></i>
+            <h2>Panel Administrator</h2>
+          </div>
+          <div
+            id="adminButtons"
+            style="display: flex; gap: 15px; align-items: center"
+          >
+            <button class="logout-btn combined-btn" type="button">
+              <i class="fas fa-sign-out-alt"></i> Kembali ke Menu Awal & Logout
+            </button>
+            <button class="btn-add-kavling" type="button">
+              <i class="fas fa-plus-circle"></i> Tambah Kavling
+            </button>
+            <button class="sync-btn combined-btn" type="button">
+              <i class="fas fa-sync-alt"></i> Sinkronkan Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Tabs -->
+        <div class="admin-tabs">
+          <button class="admin-tab-btn active" data-tab="users">
+            <i class="fas fa-users"></i> Pengguna
+          </button>
+          <button class="admin-tab-btn" data-tab="reports">
+            <i class="fas fa-chart-bar"></i> Laporan
+          </button>
+          <button class="admin-tab-btn" data-tab="activity">
+            <i class="fas fa-history"></i> Aktivitas
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <div id="tab-users" class="tab-content-item active">
+            <div id="usersListContainer">
+              <div
+                class="loading-placeholder"
+                style="text-align: center; padding: 40px; color: #94a3b8"
+              >
+                <i
+                  class="fas fa-users"
+                  style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5"
+                ></i>
+                <div>Loading daftar pengguna...</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-reports-admin" class="tab-content-item">
+            <div id="summaryReportContainerAdmin">
+              <div
+                class="loading-placeholder"
+                style="text-align: center; padding: 40px; color: #94a3b8"
+              >
+                <i
+                  class="fas fa-chart-bar"
+                  style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5"
+                ></i>
+                <div>Loading laporan summary...</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-activity-admin" class="tab-content-item">
+            <div id="activityLogContainer">
+              <div
+                class="loading-placeholder"
+                style="text-align: center; padding: 40px; color: #94a3b8"
+              >
+                <i
+                  class="fas fa-history"
+                  style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5"
+                ></i>
+                <div>Loading log aktivitas...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="main-footer">
+        &copy; BTU KNC — Sistem Pemantauan Progres - byekalazarus -
+      </footer>
+    </div>
+
+    <!-- LOAD SCRIPTS IN ORDER: script.js FIRST, THEN scriptadmin.js -->
+    <script src="script.js"></script>
+    <script src="scriptadmin.js"></script>
+  </body>
+</html>
