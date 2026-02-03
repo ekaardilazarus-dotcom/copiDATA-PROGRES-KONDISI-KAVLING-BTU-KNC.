@@ -7181,22 +7181,6 @@ function loadAdminUtilitasScript() {
     });
 }
 
-// Modifikasi fungsi showPage untuk load script admin
-const originalShowPage = showPage;
-showPage = function(role) {
-    originalShowPage(role);
-
-    // Load admin utilitas script jika role user4
-    if (role === 'user4') {
-        setTimeout(loadAdminUtilitasScript, 300);
-    }
-};
-
-// Juga load jika sudah di halaman user4 saat refresh
-if (window.currentRole === 'user4') {
-    setTimeout(loadAdminUtilitasScript, 1000);
-}
-
 async function loadSupervisorHandoverData(kavlingName) {
     if (!kavlingName) return;
     
