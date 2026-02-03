@@ -114,9 +114,9 @@ function hideGlobalLoading() {
 const MAX_REVISI_PHOTOS = 6;
 let selectedRevisiPhotos = [];
 
-function setupRevisiPhotoUpload() {
-  const photoInput = document.getElementById('revisiPhotoInputUser1');
-  const previewContainer = document.getElementById('revisiImagePreview1User1');
+function setupRevisiPhotoUpload(roleId = 'User1') {
+  const photoInput = document.getElementById(`revisiPhotoInput${roleId}`);
+  const previewContainer = document.getElementById(`revisiImagePreview1${roleId}`);
 
   if (!photoInput || !previewContainer) return;
 
@@ -146,7 +146,7 @@ function setupRevisiPhotoUpload() {
         if (base64) selectedRevisiPhotos.push(base64);
       });
 
-      renderRevisiPreviews();
+      renderRevisiPreviews(roleId);
     } catch (err) {
       console.error('Processing error:', err);
       showToast('error', 'Gagal memproses foto');
@@ -191,8 +191,8 @@ function compressImage(file, quality) {
   });
 }
 
-function renderRevisiPreviews() {
-  const previewContainer = document.getElementById('revisiImagePreview1User1');
+function renderRevisiPreviews(roleId = 'User1') {
+  const previewContainer = document.getElementById(`revisiImagePreview1${roleId}`);
   if (!previewContainer) return;
 
   if (selectedRevisiPhotos.length === 0) {
@@ -219,15 +219,15 @@ function renderRevisiPreviews() {
 
     thumb.innerHTML = `
       <img src="${base64}" style="width: 100%; height: 100%; object-fit: cover;" />
-      <button type="button" onclick="removeRevisiPhoto(${index})" style="position: absolute; top: 4px; right: 4px; background: #ef4444; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">&times;</button>
+      <button type="button" onclick="removeRevisiPhoto(${index}, '${roleId}')" style="position: absolute; top: 4px; right: 4px; background: #ef4444; color: white; border: none; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">&times;</button>
     `;
     previewContainer.appendChild(thumb);
   });
 }
 
-function removeRevisiPhoto(index) {
+function removeRevisiPhoto(index, roleId = 'User1') {
   selectedRevisiPhotos.splice(index, 1);
-  renderRevisiPreviews();
+  renderRevisiPreviews(roleId);
 }
 
 
@@ -4817,8 +4817,10 @@ function initApp() {
   }
 
   // Inisialisasi upload foto revisi
-  setupRevisiPhotoUpload();
-
+  // Role based photo upload setup
+  setupRevisiPhotoUpload('User1');
+  setupRevisiPhotoUpload('User2');
+  
   console.log('=== APP INITIALIZED ===');
 }
 
